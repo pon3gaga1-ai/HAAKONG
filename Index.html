@@ -3,205 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Item Tracker - หาของสไตล์ใหม่</title>
-    
+    <title>Face Time Attendance - สแกนหน้าเข้างาน</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root {
-            --primary-color: #6c5ce7;
-            --secondary-color: #a29bfe;
-            --bg-color: #f8f9fd;
-            --card-hover-transform: translateY(-5px);
-        }
-
-        body {
-            font-family: 'Prompt', sans-serif;
-            background-color: var(--bg-color);
-            color: #2d3436;
-        }
-
-        .navbar { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
-        .btn-primary { background-color: var(--primary-color); border: none; }
-        .btn-primary:hover { background-color: #5849c4; }
-        .text-primary-custom { color: var(--primary-color); }
-
-        /* Card Animations & Styling */
-        .item-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            background: white;
-            overflow: hidden;
-            border-left: 4px solid transparent;
-        }
-
-        .item-card:hover {
-            transform: var(--card-hover-transform);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-        }
+        body { background-color: #f0f2f5; font-family: 'Sarabun', sans-serif; }
         
-        .zone-badge {
-            background: #ffeaa7;
-            color: #d63031;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: inline-block;
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: #000;
         }
 
-        .location-detail {
-            color: #636e72;
-            font-size: 0.9rem;
-            margin-top: 5px;
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
-        /* Smooth entry animation */
-        .fade-in-up { animation: fadeInUp 0.5s ease both; }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translate3d(0, 20px, 0); }
-            to { opacity: 1; transform: none; }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
-        .auth-card { max-width: 400px; margin: 60px auto; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+
+        .log-box {
+            height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand navbar-dark shadow-sm mb-4">
+    <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-box-open"></i> My Stuff Tracker</a>
-            <div class="d-flex align-items-center" id="nav-controls">
-                </div>
+            <span class="navbar-brand mb-0 h1">🤖 AI Face Check-in</span>
         </div>
     </nav>
 
-    <div id="auth-section" class="container">
-        <div class="auth-card bg-white text-center">
-            <h3 class="mb-4 fw-bold text-primary-custom">ยินดีต้อนรับ</h3>
-            <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="email" placeholder="name@example.com">
-                <label>อีเมล</label>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 mb-4">
+                <div class="card border-0">
+                    <div class="card-body p-0">
+                        <div class="camera-container" id="camera-wrapper">
+                            <span class="badge bg-warning text-dark status-badge" id="status-text">⏳ กำลังโหลดโมเดล...</span>
+                            <video id="video" autoplay muted></video>
+                            </div>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between p-3">
+                        <input type="text" id="employee-name" class="form-control me-2" placeholder="พิมพ์ชื่อพนักงาน (สำหรับลงทะเบียน)">
+                        <button class="btn btn-success text-nowrap" onclick="registerFace()" id="btn-register" disabled>
+                            <i class="fas fa-user-plus"></i> ลงทะเบียนหน้าใหม่
+                        </button>
+                    </div>
+                    <small class="text-muted ms-3 mb-2">* ถ้าจะสแกนเข้างาน ไม่ต้องพิมพ์ชื่อ แค่มองกล้อง</small>
+                </div>
             </div>
-            <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="password" placeholder="Password">
-                <label>รหัสผ่าน</label>
-            </div>
-            <div class="d-grid gap-2">
-                <button onclick="login()" class="btn btn-primary btn-lg fw-bold">เข้าสู่ระบบ</button>
-                <button onclick="register()" class="btn btn-outline-secondary">สมัครสมาชิก</button>
+
+            <div class="col-md-5">
+                <h5 class="mb-3">🕒 ประวัติการสแกนล่าสุด</h5>
+                <div class="log-box" id="log-container">
+                    </div>
             </div>
         </div>
     </div>
 
-    <div id="app-section" class="container d-none">
-        
-        <div class="row mb-4 g-3">
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0 h-100 p-3 bg-white">
-                    <label class="form-label fw-bold"><i class="fas fa-key text-warning"></i> รหัสห้อง/บ้าน</label>
-                    <div class="input-group">
-                        <input type="text" id="active-code" class="form-control" placeholder="เช่น home1 (ใช้ร่วมกัน)">
-                        <button class="btn btn-primary" onclick="loadData()">โหลดข้อมูล</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-8">
-                 <div class="card shadow-sm border-0 h-100 p-3 bg-white d-flex justify-content-center">
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-transparent border-0 ps-0"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" id="search-box" class="form-control border-0 shadow-none ps-1 bg-transparent" placeholder="ค้นหา... เช่น กุญแจ, ในลิ้นชัก, ห้องนอน" disabled>
-                    </div>
-                 </div>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-4 col-lg-3">
-                <div class="d-grid gap-2 mb-3">
-                     <button class="btn btn-primary shadow-sm py-2 fw-bold" onclick="openAddItemModal()" id="btn-add-item" disabled>
-                        <i class="fas fa-plus-circle"></i> เพิ่มของใหม่
-                    </button>
-                </div>
-
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white fw-bold py-3">
-                        <i class="fas fa-map-signs text-primary-custom"></i> โซนในห้องนี้
-                    </div>
-                    <div class="card-body p-2 bg-white">
-                        <ul class="list-group list-group-flush" id="zone-list-display">
-                           <li class="text-muted text-center py-2 small">โหลดรหัสห้องก่อนเพื่อดูโซน</li>
-                        </ul>
-                        <div class="input-group mt-3">
-                            <input type="text" id="new-zone-name" class="form-control form-control-sm" placeholder="ชื่อโซนใหม่.." disabled>
-                            <button class="btn btn-sm btn-outline-primary" onclick="addNewZone()" id="btn-add-zone" disabled><i class="fas fa-plus"></i> เพิ่ม</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-8 col-lg-9">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold m-0"><i class="fas fa-boxes"></i> รายการของทั้งหมด (<span id="item-count">0</span>)</h5>
-                </div>
-                
-                <div id="item-list-container" class="row g-3">
-                    <div class="col-12 text-center text-muted py-5">
-                        <i class="fas fa-box-open fa-3x mb-3 text-secondary opacity-25"></i>
-                        <p>ยังไม่มีข้อมูล กรุณาใส่รหัสห้องแล้วกดโหลด</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="addItemModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">📦 เพิ่มของใหม่</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body pt-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">ชื่อสิ่งของ</label>
-                        <input type="text" id="item-name" class="form-control" placeholder="เช่น พาสปอร์ต, รีโมทแอร์">
-                    </div>
-                    
-                    <div class="mb-3">
-                         <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger"></i> เลือกโซน</label>
-                        <select id="item-zone-select" class="form-select">
-                            <option value="" selected disabled>-- กรุณาเลือกโซน --</option>
-                            </select>
-                        <div class="form-text small text-end"><a href="#" onclick="document.querySelector('.btn-close').click(); document.getElementById('new-zone-name').focus();">เพิ่มโซนใหม่ที่แถบซ้ายมือ</a></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">รายละเอียดที่ตั้ง (ชัดๆ)</label>
-                        <textarea id="item-location-detail" class="form-control" rows="3" placeholder="เช่น อยู่ในลิ้นชักบนสุดของตู้เสื้อผ้า, บนหลังตู้เย็น"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="button" onclick="saveItem()" class="btn btn-primary px-4 fw-bold">บันทึกทันที</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // --- 1. Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyDT39HkTA1TLFKvuQNZcrNeIZMLANgy2z0",
             authDomain: "scan-4b703.firebaseapp.com",
@@ -211,206 +102,168 @@
             appId: "1:667992011250:web:adce534c0f97b4ddb47b6b",
             measurementId: "G-X5QG9YZWG6"
         };
-
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUser = null;
-        let allItems = [];
-        let currentZones = [];
-        let fuse;
-        const addItemModal = new bootstrap.Modal(document.getElementById('addItemModal'));
-        let itemUnsubscribe = null;
-        let zoneUnsubscribe = null;
+        // --- 2. Variables & Setup ---
+        const video = document.getElementById('video');
+        const wrapper = document.getElementById('camera-wrapper');
+        const statusText = document.getElementById('status-text');
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models'; // Public Models
+        let labeledFaceDescriptors = [];
+        let faceMatcher;
+        let canvas;
+        let isModelLoaded = false;
+        let lastCheckInTime = {}; // กันการ check-in รัวๆ
 
-        // --- Auth ---
-        window.login = async () => {
-            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-            catch (e) { alert(e.message); }
-        };
-        window.register = async () => {
-            try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); alert("สมัครสำเร็จ!"); } catch (e) { alert(e.message); }
-        };
-        window.logout = () => {
-            if(itemUnsubscribe) itemUnsubscribe();
-            if(zoneUnsubscribe) zoneUnsubscribe();
-            signOut(auth);
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) {
-                document.getElementById('auth-section').classList.add('d-none');
-                document.getElementById('app-section').classList.remove('d-none');
-                document.getElementById('nav-controls').innerHTML = `<span class="text-white me-3"><i class="fas fa-user-circle"></i> ${user.email.split('@')[0]}</span><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">Logout</button>`;
-            } else {
-                document.getElementById('auth-section').classList.remove('d-none');
-                document.getElementById('app-section').classList.add('d-none');
-                resetUI();
-            }
+        // --- 3. Load AI Models & Webcam ---
+        Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]).then(startVideo).catch(err => {
+            console.error(err);
+            statusText.innerText = "❌ โหลดโมเดลไม่สำเร็จ (เช็คเน็ต)";
+            statusText.className = "badge bg-danger status-badge";
         });
 
-        function resetUI() {
-             document.getElementById('item-list-container').innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-box-open fa-3x mb-3 text-secondary opacity-25"></i><p>กรุณาเข้าสู่ระบบ</p></div>';
-             document.getElementById('zone-list-display').innerHTML = '';
-             toggleControls(false);
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({ video: {} })
+                .then(stream => { video.srcObject = stream; })
+                .catch(err => console.error("Camera Error:", err));
         }
 
-        function toggleControls(enable) {
-            document.getElementById('search-box').disabled = !enable;
-            document.getElementById('btn-add-item').disabled = !enable;
-            document.getElementById('new-zone-name').disabled = !enable;
-            document.getElementById('btn-add-zone').disabled = !enable;
-        }
-
-
-        // --- Main Logic ---
-        window.loadData = () => {
-            const code = document.getElementById('active-code').value.trim();
-            if (!code) return alert("กรุณาใส่รหัสห้อง");
+        // --- 4. Main Process Loop ---
+        video.addEventListener('play', async () => {
+            // โหลดข้อมูลหน้าคนจาก Firebase ก่อนเริ่ม
+            await loadLabeledImagesFromDB();
             
-            if(itemUnsubscribe) itemUnsubscribe();
-            if(zoneUnsubscribe) zoneUnsubscribe();
+            isModelLoaded = true;
+            statusText.innerText = "✅ ระบบพร้อมทำงาน";
+            statusText.className = "badge bg-success status-badge";
+            document.getElementById('btn-register').disabled = false;
 
-            toggleControls(true);
+            // สร้าง Canvas ทับวิดีโอ
+            canvas = faceapi.createCanvasFromMedia(video);
+            wrapper.append(canvas);
+            const displaySize = { width: video.width || 640, height: video.height || 480 };
+            faceapi.matchDimensions(canvas, displaySize);
 
-            // 1. Load Zones (Realtime)
-            const zoneQ = query(collection(db, "zones"), where("secretCode", "==", code), orderBy("name"));
-            zoneUnsubscribe = onSnapshot(zoneQ, (snapshot) => {
-                currentZones = [];
-                const zoneListDisplay = document.getElementById('zone-list-display');
-                const zoneSelect = document.getElementById('item-zone-select');
+            // Loop ตรวจจับทุก 100ms
+            setInterval(async () => {
+                if(!isModelLoaded) return;
+
+                const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
                 
-                zoneListDisplay.innerHTML = '';
-                zoneSelect.innerHTML = '<option value="" selected disabled>-- กรุณาเลือกโซน --</option>';
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-                if(snapshot.empty) {
-                    zoneListDisplay.innerHTML = '<li class="list-group-item text-muted small text-center">ยังไม่มีโซน เพิ่มเลย!</li>';
+                if (labeledFaceDescriptors.length > 0) {
+                    // สร้าง Matcher ใหม่ทุกครั้งเผื่อมีคนสมัครใหม่
+                    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
+                    
+                    const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
+
+                    results.forEach((result, i) => {
+                        const box = resizedDetections[i].detection.box;
+                        const { label, distance } = result;
+                        
+                        // วาดกรอบ
+                        const drawBox = new faceapi.draw.DrawBox(box, { label: label + ` (${Math.round((1-distance)*100)}%)` });
+                        drawBox.draw(canvas);
+
+                        // บันทึกการเข้างาน (ถ้ามั่นใจเกิน 50% และไม่ใช่ unknown)
+                        if (label !== 'unknown' && distance < 0.5) {
+                            recordAttendance(label);
+                        }
+                    });
+                } else {
+                    // กรณีไม่มีข้อมูลในฐานข้อมูลเลย
+                    faceapi.draw.drawDetections(canvas, resizedDetections);
                 }
+            }, 100);
+        });
 
-                snapshot.forEach(doc => {
-                    const zone = doc.data();
-                    currentZones.push(zone.name);
-                    // Update sidebar list
-                    zoneListDisplay.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><span class="badge bg-light text-dark border"><i class="fas fa-map-marker-alt text-danger"></i> ${zone.name}</span></li>`;
-                    // Update modal select dropdown
-                    zoneSelect.innerHTML += `<option value="${zone.name}">${zone.name}</option>`;
-                });
+        // --- 5. Firebase Functions ---
+
+        // โหลดข้อมูลใบหน้าทั้งหมดจาก Firebase
+        async function loadLabeledImagesFromDB() {
+            const querySnapshot = await getDocs(collection(db, "faces"));
+            labeledFaceDescriptors = [];
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // แปลง Array ปกติ กลับเป็น Float32Array ที่ AI ใช้
+                const descriptor = new Float32Array(data.descriptor);
+                labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(data.name, [descriptor]));
             });
+            console.log("Loaded faces:", labeledFaceDescriptors.length);
+        }
 
+        // ฟังก์ชันกดลงทะเบียน (Register)
+        window.registerFace = async () => {
+            const name = document.getElementById('employee-name').value.trim();
+            if (!name) return Swal.fire('แจ้งเตือน', 'กรุณาใส่ชื่อพนักงาน', 'warning');
 
-            // 2. Load Items (Realtime)
-            const itemQ = query(collection(db, "items"), where("secretCode", "==", code), orderBy("timestamp", "desc"));
-            itemUnsubscribe = onSnapshot(itemQ, (snapshot) => {
-                allItems = [];
-                snapshot.forEach(doc => allItems.push({ id: doc.id, ...doc.data() }));
+            statusText.innerText = "📸 กำลังประมวลผลใบหน้า...";
+            
+            // จับภาพหน้าเดียวที่ชัดที่สุด
+            const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+            
+            if (detection) {
+                // แปลง Float32Array เป็น Array ปกติเพื่อเก็บลง Firebase
+                const descriptorArray = Array.from(detection.descriptor);
                 
-                document.getElementById('item-count').innerText = allItems.length;
-
-                // Config Fuzzy Search including new fields
-                fuse = new Fuse(allItems, { includeScore: true, keys: ['name', 'zone', 'locationDetails'], threshold: 0.3 });
-                
-                renderItems(allItems);
-            });
-        };
-
-        function renderItems(items) {
-            const container = document.getElementById('item-list-container');
-            container.innerHTML = '';
-
-            if (items.length === 0) {
-                 container.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-ghost fa-3x mb-3 text-secondary opacity-25"></i><p>ยังไม่มีของในห้องนี้</p></div>';
-                 return;
+                try {
+                    await addDoc(collection(db, "faces"), {
+                        name: name,
+                        descriptor: descriptorArray,
+                        createdAt: serverTimestamp()
+                    });
+                    
+                    Swal.fire('สำเร็จ', `ลงทะเบียนคุณ ${name} เรียบร้อย!`, 'success');
+                    document.getElementById('employee-name').value = '';
+                    await loadLabeledImagesFromDB(); // โหลดข้อมูลใหม่เข้าหน่วยความจำ
+                    
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'บันทึกไม่ผ่าน', 'error');
+                }
+            } else {
+                Swal.fire('ไม่พบใบหน้า', 'กรุณาขยับหน้าให้ชัดเจน หรือถอดแว่น/หน้ากาก', 'error');
             }
-
-            items.forEach((item, index) => {
-                // Assign a color border based on zone (simple hashing)
-                const colors = ['primary', 'success', 'danger', 'warning', 'info'];
-                const zoneColor = colors[item.zone.length % colors.length];
-
-                const col = document.createElement('div');
-                col.className = 'col-md-6 col-lg-4 fade-in-up';
-                col.style.animationDelay = `${index * 0.05}s`;
-
-                col.innerHTML = `
-                    <div class="card item-card h-100 border-${zoneColor}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title fw-bold mb-0 text-dark">${item.name}</h5>
-                                ${currentUser.uid === item.userId ? `<button class="btn btn-sm btn-link text-danger p-0" onclick="deleteItem('${item.id}')"><i class="fas fa-trash-alt"></i></button>` : ''}
-                            </div>
-                            <div class="mb-3">
-                                <span class="zone-badge"><i class="fas fa-map-marker-alt"></i> โซน: ${item.zone}</span>
-                            </div>
-                             <div class="location-detail bg-light p-2 rounded">
-                                <i class="fas fa-info-circle text-${zoneColor}"></i> <b>ที่ตั้ง:</b> ${item.locationDetails || '-'}
-                            </div>
-                             <div class="text-end mt-2">
-                                <small class="text-muted" style="font-size: 0.75rem;"><i class="far fa-clock"></i> ${item.timestamp?.toDate().toLocaleDateString('th-TH')}</small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(col);
-            });
-        }
-
-        // --- Actions ---
-        window.addNewZone = async () => {
-            const nameInput = document.getElementById('new-zone-name');
-            const name = nameInput.value.trim();
-            const code = document.getElementById('active-code').value;
-            if(!name || !code) return;
-
-            if(currentZones.includes(name)) return alert("ชื่อโซนนี้มีอยู่แล้ว");
-
-            try {
-                await addDoc(collection(db, "zones"), { name, secretCode: code, userId: currentUser.uid });
-                nameInput.value = '';
-            } catch(e) { console.error(e); }
+            statusText.innerText = "✅ ระบบพร้อมทำงาน";
         };
 
-        window.openAddItemModal = () => {
-             if(currentZones.length === 0) return alert("กรุณาเพิ่ม 'โซน' ก่อนครับ (ที่แถบซ้ายมือ)");
-             document.getElementById('item-name').value = '';
-             document.getElementById('item-location-detail').value = '';
-             document.getElementById('item-zone-select').selectedIndex = 0;
-             addItemModal.show();
-        }
-
-        window.saveItem = async () => {
-            const name = document.getElementById('item-name').value.trim();
-            const zone = document.getElementById('item-zone-select').value;
-            const locationDetails = document.getElementById('item-location-detail').value.trim();
-            const code = document.getElementById('active-code').value;
-
-            if(!name || !zone) return alert("กรุณาใส่ชื่อของและเลือกโซน");
-
-            try {
-                await addDoc(collection(db, "items"), {
-                    userId: currentUser.uid, secretCode: code,
-                    name, zone, locationDetails,
-                    timestamp: new Date()
-                });
-                addItemModal.hide();
-            } catch (e) { console.error(e); }
-        };
-
-        window.deleteItem = async (id) => {
-            if(confirm("ลบรายการนี้?")) await deleteDoc(doc(db, "items", id));
-        };
-
-        // --- Search ---
-        document.getElementById('search-box').addEventListener('keyup', (e) => {
-            const term = e.target.value;
-            if (!term) {
-                renderItems(allItems);
+        // ฟังก์ชันบันทึกเวลา (Check-in)
+        async function recordAttendance(name) {
+            const now = new Date();
+            // ป้องกันการยิงซ้ำภายใน 1 นาที
+            if (lastCheckInTime[name] && (now - lastCheckInTime[name]) < 60000) {
                 return;
             }
-            const results = fuse.search(term).map(r => r.item);
-            renderItems(results);
-        });
+            
+            lastCheckInTime[name] = now;
+            
+            // แสดงบนหน้าเว็บ
+            const logContainer = document.getElementById('log-container');
+            const timeStr = now.toLocaleTimeString('th-TH');
+            const html = `
+                <div class="alert alert-success py-2 mb-2 fade show">
+                    <strong>${name}</strong> เข้างานเวลา ${timeStr}
+                </div>`;
+            logContainer.insertAdjacentHTML('afterbegin', html);
+
+            // บันทึกลง Firebase
+            try {
+                await addDoc(collection(db, "attendance_logs"), {
+                    name: name,
+                    timestamp: serverTimestamp(),
+                    type: 'check-in'
+                });
+            } catch (e) { console.error("Log error", e); }
+        }
+
     </script>
 </body>
 </html>
