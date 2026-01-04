@@ -2,327 +2,317 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Planner - ปฏิทินมือโปร</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Card Generator - สร้างรูปรับเงินสวยๆ</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            /* Theme Colors */
-            --primary-grad: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            --secondary-grad: linear-gradient(135deg, #ff9a44 0%, #fc6076 100%);
-            --bg-color: #f8f9fd;
-            --text-dark: #2d3436;
-            --nav-height: 70px;
+            --primary: #4e54c8;
+            --bg-color: #f4f7f6;
         }
 
         body {
             font-family: 'Prompt', sans-serif;
             background-color: var(--bg-color);
-            padding-bottom: calc(var(--nav-height) + 20px);
-            color: var(--text-dark);
-            -webkit-tap-highlight-color: transparent;
+            padding: 20px;
+            color: #333;
         }
 
-        /* --- Page Transitions --- */
-        .page-section { display: none; animation: fadeUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
-        .page-section.active { display: block; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
 
-        /* --- Bottom Navigation (สวยขึ้น) --- */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0; left: 0; width: 100%;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
+        .form-section { padding: 30px; }
+        .preview-section {
+            background: #e9ecef;
+            padding: 30px;
             display: flex;
-            justify-content: space-around;
-            height: var(--nav-height);
+            flex-direction: column;
             align-items: center;
-            z-index: 1000;
-            border-radius: 25px 25px 0 0;
-            padding-bottom: env(safe-area-inset-bottom); /* รองรับ iPhone จอแหว่ง */
+            justify-content: center;
+            min-height: 500px;
         }
 
-        .nav-item {
-            border: none; background: none;
-            color: #b2bec3;
-            font-size: 1.5rem;
-            position: relative;
+        .form-label { font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+        .form-control { border-radius: 10px; padding: 12px; border: 2px solid #eee; }
+        .form-control:focus { border-color: var(--primary); box-shadow: none; }
+
+        .qr-upload-box {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
             transition: all 0.3s;
+            background: #f8fafc;
+        }
+        .qr-upload-box:hover { border-color: var(--primary); background: #f0f4ff; }
+        #qr-preview-img { max-width: 150px; max-height: 150px; object-fit: contain; display: none; margin: 10px auto; border-radius: 8px; border: 2px solid #eee; }
+
+        /* Canvas styling */
+        #result-canvas {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border-radius: 16px;
+            /* ซ่อนไว้ก่อนจนกว่าจะกดสร้าง */
+            display: none; 
         }
 
-        .nav-item.active {
-            color: #2575fc;
-            transform: translateY(-5px);
+        .placeholder-preview {
+            text-align: center; color: #adb5bd;
+            display: flex; flex-direction: column; align-items: center;
         }
-        .nav-item.active::after {
-            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-            width: 6px; height: 6px; background: #2575fc; border-radius: 50%;
-        }
-
-        /* --- UI Elements --- */
-        .header-title {
-            font-weight: 700; font-size: 1.5rem;
-            background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 25px;
-        }
-        .custom-card {
-            background: white; border-radius: 20px; padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: none;
-        }
-        .btn-grad { background: var(--primary-grad); border: none; color: white; font-weight: 600; }
-
-        /* --- FullCalendar Beautification (แก้ให้สวย) --- */
-        .fc { --fc-border-color: transparent; --fc-today-bg-color: transparent; }
-        .fc-toolbar-title { font-size: 1.3rem !important; font-weight: 700; color: var(--text-dark); }
-        .fc-button-primary { background: white !important; border: none !important; color: var(--text-dark) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; font-weight: 600; }
-        .fc-col-header-cell { padding: 10px 0; color: #a4b0be; font-weight: 500; text-transform: uppercase; font-size: 0.8rem; }
-        .fc-daygrid-day-number { font-weight: 600; color: var(--text-dark); padding: 10px !important; }
         
-        /* ไฮไลท์วันนี้เป็นวงกลม */
-        .fc-day-today .fc-daygrid-day-number {
-            background: var(--secondary-grad); color: white;
-            border-radius: 50%; width: 35px; height: 35px;
-            display: flex; align-items: center; justify-content: center; margin: 5px;
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none; font-weight: 600; letter-spacing: 1px;
         }
-        .fc-event { border-radius: 8px; border: none; font-weight: 500; padding: 3px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-
-        /* --- Task List Item --- */
-        .task-item {
-            background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px;
-            display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-            transition: transform 0.2s;
+         .btn-download {
+            background: #2d3436; border: none; font-weight: 600;
         }
-        .task-item:active { transform: scale(0.98); }
-        .task-date-box {
-            background: #f1f2f6; border-radius: 12px; padding: 10px; text-align: center; min-width: 65px; margin-right: 15px;
-        }
-        .task-day { font-size: 1.4rem; font-weight: 700; color: var(--text-dark); line-height: 1; }
-        .task-month { font-size: 0.8rem; color: #7f8c8d; }
-
-        /* Profile Page */
-        .profile-header { text-align: center; padding: 40px 0; }
-        .profile-avatar { width: 100px; height: 100px; background: var(--primary-grad); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; box-shadow: 0 10px 20px rgba(37, 117, 252, 0.3); }
     </style>
 </head>
 <body>
 
-    <div id="auth-section" class="container d-flex align-items-center justify-content-center" style="min-height: 90vh;">
-        <div class="custom-card text-center p-5 w-100" style="max-width: 400px;">
-            <div class="mb-4"><i class="fas fa-rocket fa-4x" style="background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i></div>
-            <h3 class="fw-bold mb-4">ยินดีต้อนรับ</h3>
-            <div class="form-floating mb-3">
-                <input type="email" id="email" class="form-control rounded-4" placeholder="name@example.com">
-                <label class="text-muted">อีเมล</label>
-            </div>
-            <div class="form-floating mb-4">
-                <input type="password" id="password" class="form-control rounded-4" placeholder="Password">
-                <label class="text-muted">รหัสผ่าน</label>
-            </div>
-            <button onclick="login()" class="btn btn-grad w-100 py-3 rounded-pill fw-bold fs-5 shadow-sm">เข้าใช้งาน</button>
-        </div>
-    </div>
-
-    <div id="app-section" class="d-none">
-        
-        <div id="page-calendar" class="page-section active container pt-4">
-            <h4 class="header-title">ปฏิทินของฉัน</h4>
-            <div class="custom-card p-3 overflow-hidden">
-                <div id="calendar"></div>
-            </div>
+    <div class="container py-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold"><i class="fas fa-magic text-primary"></i> สร้างการ์ดรับเงินสุดคูล</h2>
+            <p class="text-muted">กรอกข้อมูล อัปโหลด QR แล้วให้ระบบออกแบบให้!</p>
         </div>
 
-        <div id="page-add" class="page-section container pt-4">
-            <h4 class="header-title">สร้างรายการใหม่</h4>
-            <div class="custom-card">
+        <div class="main-container row g-0">
+            <div class="col-lg-5 form-section order-2 order-lg-1">
+                <h5 class="mb-4 fw-bold"><i class="fas fa-edit me-2"></i>ข้อมูลบัญชีของคุณ</h5>
+                
                 <div class="mb-4">
-                    <input type="text" id="add-title" class="form-control form-control-lg border-0 fw-bold fs-4 p-0 mb-2" placeholder="ชื่อกิจกรรม..." style="box-shadow: none;">
-                    <input type="date" id="add-date" class="form-control border-0 p-0 text-muted" style="box-shadow: none; width: auto;">
-                </div>
-                <div class="mb-4">
-                    <label class="form-label fw-bold small text-muted mb-3">ความสำคัญ (เลือกสี)</label>
-                    <div class="d-flex gap-3 justify-content-center">
-                        <input type="radio" class="btn-check" name="color" id="c1" value="#ff6b6b" checked>
-                        <label class="btn rounded-circle p-3 shadow-sm" for="c1" style="background: #ff6b6b; border: 3px solid white; outline: 2px solid #ff6b6b;"></label>
-                        
-                        <input type="radio" class="btn-check" name="color" id="c2" value="#4e54c8">
-                        <label class="btn rounded-circle p-3 shadow-sm" for="c2" style="background: #4e54c8; border: 3px solid white; outline: 2px solid #4e54c8;"></label>
-
-                        <input type="radio" class="btn-check" name="color" id="c3" value="#feca57">
-                        <label class="btn rounded-circle p-3 shadow-sm" for="c3" style="background: #feca57; border: 3px solid white; outline: 2px solid #feca57;"></label>
+                    <label class="form-label">1. รูป QR Code รับเงิน</label>
+                    <input type="file" id="qr-upload" accept="image/*" hidden>
+                    <div class="qr-upload-box" onclick="document.getElementById('qr-upload').click()">
+                        <i class="fas fa-qrcode fa-3x text-muted mb-2" id="upload-icon"></i>
+                        <p class="mb-0 text-muted" id="upload-text">คลิกเพื่อเลือกรูป QR Code</p>
+                        <img id="qr-preview-img" alt="QR Preview">
                     </div>
                 </div>
-                <div class="mb-4">
-                    <textarea id="add-details" class="form-control bg-light border-0 rounded-4 p-3" rows="4" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+
+                <div class="mb-3">
+                    <label for="bank-name" class="form-label">ชื่อธนาคาร / ช่องทาง</label>
+                    <input type="text" id="bank-name" class="form-control" placeholder="เช่น กสิกรไทย, พร้อมเพย์">
                 </div>
-                <button onclick="saveEvent()" class="btn btn-grad w-100 py-3 rounded-pill fw-bold shadow-sm">
-                    <i class="fas fa-check-circle me-2"></i> บันทึกกิจกรรม
+                
+                <div class="mb-3">
+                    <label for="acc-name" class="form-label">ชื่อบัญชี</label>
+                    <input type="text" id="acc-name" class="form-control" placeholder="เช่น นายสมชาย ใจดี">
+                </div>
+                
+                <div class="mb-3">
+                   <label for="acc-num" class="form-label">เลขที่บัญชี / เบอร์โทร</label>
+                   <input type="text" id="acc-num" class="form-control font-monospace" placeholder="เช่น 123-4-56789-0">
+                </div>
+
+                 <div class="mb-4">
+                   <label for="amount-text" class="form-label">ยอดเงิน (ถ้ามี)</label>
+                   <input type="text" id="amount-text" class="form-control fw-bold text-success" placeholder="เช่น 500 บาท (เว้นว่างได้)">
+                </div>
+
+                <button onclick="generateCard()" class="btn btn-primary btn-generate w-100 py-3 rounded-pill shadow mb-3">
+                    <i class="fas fa-wand-magic-sparkles me-2"></i> สร้างรูปภาพสวยๆ
                 </button>
             </div>
-        </div>
 
-        <div id="page-search" class="page-section container pt-4">
-            <h4 class="header-title">รายการทั้งหมด</h4>
-            <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden bg-white p-1">
-                <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
-                <input type="text" id="search-input" class="form-control border-0 shadow-none bg-white" placeholder="ค้นหาจากชื่อ หรือ วันที่...">
-            </div>
-            <div id="task-list-container">
+            <div class="col-lg-7 preview-section order-1 order-lg-2">
+                 <h5 class="mb-3 fw-bold text-muted">ตัวอย่างรูปภาพ</h5>
+                <canvas id="result-canvas" width="600" height="800"></canvas>
+                
+                <div class="placeholder-preview" id="placeholder-box">
+                    <i class="fas fa-image fa-5x mb-3 opacity-25"></i>
+                    <p>รูปภาพที่สร้างจะปรากฏที่นี่</p>
                 </div>
-        </div>
 
-        <div id="page-profile" class="page-section container pt-4">
-            <h4 class="header-title">โปรไฟล์</h4>
-            <div class="custom-card profile-header">
-                <div class="profile-avatar"><i class="fas fa-user"></i></div>
-                <h5 class="fw-bold mb-1" id="profile-email">loading...</h5>
-                <p class="text-muted small">ผู้ใช้งาน</p>
-                <button onclick="logout()" class="btn btn-outline-danger rounded-pill px-4 mt-3 fw-bold">
-                    <i class="fas fa-sign-out-alt me-2"></i> ออกจากระบบ
-                </button>
-            </div>
-             <div class="custom-card mt-3 p-3 text-center text-muted small">
-                Pro Planner App v5.0
+                <div id="download-area" class="mt-4 d-none text-center">
+                    <p class="text-muted small mb-2">ถ้าไม่ชอบ กดสร้างใหม่เพื่อสุ่มดีไซน์</p>
+                    <button onclick="downloadImage()" class="btn btn-dark btn-download rounded-pill px-5 py-2 shadow-sm">
+                        <i class="fas fa-download me-2"></i> บันทึกรูปลงเครื่อง
+                    </button>
+                </div>
             </div>
         </div>
-
-        <div class="bottom-nav shadow-lg">
-            <button class="nav-item active" onclick="switchPage('calendar', this)"><i class="fas fa-calendar-alt"></i></button>
-            <button class="nav-item" onclick="switchPage('add', this)"><i class="fas fa-plus-circle" style="font-size: 2rem; color: #2575fc; filter: drop-shadow(0 4px 8px rgba(37, 117, 252, 0.3));"></i></button>
-            <button class="nav-item" onclick="switchPage('search', this)"><i class="fas fa-stream"></i></button>
-            <button class="nav-item" onclick="switchPage('profile', this)"><i class="far fa-user-circle"></i></button>
+        <div class="text-center mt-3 text-muted small">
+            *การประมวลผลภาพเกิดขึ้นบนเครื่องของคุณ ข้อมูลปลอดภัย
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, deleteDoc, doc, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let uploadedQRImage = null;
+        const canvas = document.getElementById('result-canvas');
+        const ctx = canvas.getContext('2d');
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDT39HkTA1TLFKvuQNZcrNeIZMLANgy2z0",
-            authDomain: "scan-4b703.firebaseapp.com",
-            projectId: "scan-4b703",
-            storageBucket: "scan-4b703.firebasestorage.app",
-            messagingSenderId: "667992011250",
-            appId: "1:667992011250:web:adce534c0f97b4ddb47b6b",
-            measurementId: "G-X5QG9YZWG6"
-        };
+        // Color Palettes สำหรับสุ่มดีไซน์
+        const themes = [
+            { bg: ['#a1c4fd', '#c2e9fb'], accent: '#2b6cb0', text: '#1a202c' }, // ฟ้าสดใส
+            { bg: ['#fbc2eb', '#a6c1ee'], accent: '#6b46c1', text: '#2d3748' }, // ชมพูม่วง
+            { bg: ['#84fab0', '#8fd3f4'], accent: '#2f855a', text: '#1c4532' }, // เขียวมิ้นท์
+            { bg: ['#fccb90', '#d57eeb'], accent: '#b83280', text: '#4a1d34' }, // ส้มชมพู
+            { bg: ['#e0c3fc', '#8ec5fc'], accent: '#4c51bf', text: '#1e1b4b' }, // ม่วงฟ้า
+            { bg: ['#fad0c4', '#ffd1ff'], accent: '#c53030', text: '#4a1d1f' }  // พีช
+        ];
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        let currentUser = null, calendar, allEvents = [], unsubscribe;
-
-        window.login = async () => {
-            const e = document.getElementById('email').value; p = document.getElementById('password').value;
-            try { await signInWithEmailAndPassword(auth, e, p); } 
-            catch { try { await createUserWithEmailAndPassword(auth, e, p); Swal.fire('ยินดีต้อนรับ', 'สมัครสมาชิกสำเร็จ', 'success'); } catch(err){ Swal.fire('Error', err.message, 'error'); } }
-        };
-        window.logout = () => { if(unsubscribe) unsubscribe(); signOut(auth); };
-
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if(user) {
-                document.getElementById('auth-section').classList.add('d-none');
-                document.getElementById('app-section').classList.remove('d-none');
-                document.getElementById('profile-email').innerText = user.email;
-                document.getElementById('add-date').valueAsDate = new Date();
-                initApp();
-            } else {
-                document.getElementById('auth-section').classList.remove('d-none');
-                document.getElementById('app-section').classList.add('d-none');
+        // --- 1. Handle QR Upload Preivew ---
+        document.getElementById('qr-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // โหลดรูปลง memory เพื่อรอวาดลง canvas
+                    uploadedQRImage = new Image();
+                    uploadedQRImage.src = event.target.result;
+                    
+                    // แสดง preview เล็กๆ ในกล่องอัปโหลด
+                    document.getElementById('qr-preview-img').src = event.target.result;
+                    document.getElementById('qr-preview-img').style.display = 'block';
+                    document.getElementById('upload-icon').style.display = 'none';
+                    document.getElementById('upload-text').innerText = 'เปลี่ยนรูป QR Code';
+                }
+                reader.readAsDataURL(file);
             }
         });
 
-        function initApp() {
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth', locale: 'th', height: 'auto',
-                headerToolbar: { left: 'title', right: 'prev,next' },
-                dayHeaderFormat: { weekday: 'short' },
-                fixedWeekCount: false, showNonCurrentDates: false,
-                events: [], 
-                eventClick: (info) => deleteTask(info.event.id, info.event.title)
-            });
-            calendar.render();
+        // --- 2. The "AI" Drawing Logic (Canvas) ---
+        function generateCard() {
+            // Validate input
+            if (!uploadedQRImage) return Swal.fire('ลืมอะไรไปหรือเปล่า?', 'กรุณาอัปโหลดรูป QR Code ก่อนนะครับ', 'warning');
+            const bankName = document.getElementById('bank-name').value || 'ช่องทางชำระเงิน';
+            const accName = document.getElementById('acc-name').value || '-';
+            const accNum = document.getElementById('acc-num').value || '-';
+            const amount = document.getElementById('amount-text').value;
 
-            if(unsubscribe) unsubscribe();
-            const q = query(collection(db, "calendar_events"), where("userId", "==", currentUser.uid), orderBy("date"));
-            unsubscribe = onSnapshot(q, (snapshot) => {
-                allEvents = [];
-                const calendarEvents = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const eventObj = { id: doc.id, title: data.title, start: data.date, backgroundColor: data.color, borderColor: 'transparent', details: data.details };
-                    calendarEvents.push(eventObj); allEvents.push(eventObj);
-                });
-                calendar.removeAllEvents(); calendar.addEventSource(calendarEvents);
-                renderTaskList(allEvents); // อัปเดตหน้ารายการทันทีที่ข้อมูลเปลี่ยน
-            });
+            // 2.1 สุ่มธีมสี
+            const theme = themes[Math.floor(Math.random() * themes.length)];
+            
+            // 2.2 เริ่มวาดพื้นหลัง (Gradient)
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, theme.bg[0]);
+            gradient.addColorStop(1, theme.bg[1]);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // วาดลวดลายพื้นหลัง (วงกลมใสๆ) เพื่อความสวยงาม
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for(let i=0; i<5; i++) {
+                 ctx.beginPath();
+                 ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*150 + 50, 0, Math.PI*2);
+                 ctx.fill();
+            }
+
+            // 2.3 วาดการ์ดสีขาวตรงกลาง (Rounded Rectangle Placeholder)
+            const cardX = 50, cardY = 100, cardW = 500, cardH = 600;
+            drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 30, '#ffffff');
+            // เพิ่มเงาให้การ์ด (วาดซ้ำแบบเบลอๆ ด้านหลัง - เทคนิค canvas)
+            ctx.shadowColor = "rgba(0,0,0,0.15)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 15;
+            drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 30, '#ffffff');
+            ctx.shadowColor = "transparent"; // Reset shadow
+
+            // 2.4 วาดหัวข้อ (Header)
+            ctx.fillStyle = theme.accent;
+            ctx.font = "bold 32px 'Prompt', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("สแกนเพื่อชำระเงิน", canvas.width / 2, cardY + 60);
+            
+            ctx.fillStyle = theme.text;
+            ctx.font = "500 18px 'Prompt', sans-serif";
+            ctx.fillText("Payment Details", canvas.width / 2, cardY + 90);
+
+            // --- เส้นคั่น ---
+            ctx.strokeStyle = '#eee'; ctx.lineWidth = 2; ctx.beginPath();
+            ctx.moveTo(cardX + 50, cardY + 120); ctx.lineTo(cardX + cardW - 50, cardY + 120); ctx.stroke();
+
+            // 2.5 วาด QR Code (สำคัญมาก)
+            const qrSize = 220;
+            const qrX = (canvas.width - qrSize) / 2;
+            const qrY = cardY + 150;
+            // วาดกรอบ QR สีตามธีม
+            drawRoundedRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 15, theme.bg[0]); // กรอบนอก
+            drawRoundedRect(ctx, qrX - 5, qrY - 5, qrSize + 10, qrSize + 10, 12, '#ffffff'); // กรอบในสีขาว
+            // วาดรูป QR จริงๆ
+            ctx.drawImage(uploadedQRImage, qrX, qrY, qrSize, qrSize);
+
+            // 2.6 วาดข้อมูลธนาคาร (Text Details)
+            let textY = qrY + qrSize + 60;
+            
+            // ชื่อธนาคาร
+            ctx.fillStyle = theme.accent;
+            ctx.font = "bold 24px 'Prompt', sans-serif";
+            ctx.fillText(bankName, canvas.width / 2, textY);
+            
+            // เลขบัญชี (ตัวใหญ่หน่อย)
+            textY += 45;
+            ctx.fillStyle = '#333';
+            ctx.font = "bold 36px 'Prompt', monospace"; // ใช้ monospace ให้เลขสวย
+            ctx.fillText(accNum, canvas.width / 2, textY);
+            
+            // ชื่อบัญชี
+            textY += 40;
+            ctx.fillStyle = '#666';
+            ctx.font = "500 20px 'Prompt', sans-serif";
+            ctx.fillText(accName, canvas.width / 2, textY);
+
+             // ยอดเงิน (ถ้ามี)
+            if(amount) {
+                textY += 70;
+                 // วาดพื้นหลังยอดเงิน
+                drawRoundedRect(ctx, cardX + 80, textY - 40, cardW - 160, 60, 30, theme.bg[1]);
+                ctx.fillStyle = theme.accent;
+                ctx.font = "bold 28px 'Prompt', sans-serif";
+                ctx.fillText(`ยอดโอน: ${amount}`, canvas.width / 2, textY);
+            }
+
+            // 2.7 วาด Footer เล็กๆ
+            ctx.fillStyle = '#999';
+            ctx.font = "14px 'Prompt', sans-serif";
+            ctx.fillText("ขอบคุณที่ใช้บริการ", canvas.width / 2, cardY + cardH - 30);
+
+            // --- แสดงผล ---
+            document.getElementById('placeholder-box').style.display = 'none';
+            canvas.style.display = 'block';
+            document.getElementById('download-area').classList.remove('d-none');
+            
+            Swal.fire({ icon: 'success', title: 'สร้างรูปสำเร็จ!', text: 'ถ้าไม่ชอบสี กดสร้างใหม่ได้เลย', timer: 1500, showConfirmButton: false });
         }
 
-        window.switchPage = (pageId, btn) => {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('page-' + pageId).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
-            if(pageId === 'calendar' && calendar) setTimeout(() => calendar.render(), 150);
-        };
-
-        window.saveEvent = async () => {
-            const title = document.getElementById('add-title').value;
-            const date = document.getElementById('add-date').value;
-            const details = document.getElementById('add-details').value;
-            const color = document.querySelector('input[name="color"]:checked').value;
-            if(!title || !date) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาใส่ชื่อและวันที่', 'warning');
-            try {
-                await addDoc(collection(db, "calendar_events"), { userId: currentUser.uid, title, date, details, color, createdAt: new Date() });
-                Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-                document.getElementById('add-title').value = ''; document.getElementById('add-details').value = '';
-                // กลับหน้าปฏิทิน ข้อมูลจะอัปเดตเองอัตโนมัติจาก onSnapshot
-                switchPage('calendar', document.querySelector('.bottom-nav button:first-child'));
-            } catch(e) { console.error(e); }
-        };
-
-        document.getElementById('search-input').addEventListener('keyup', (e) => {
-            const term = e.target.value.toLowerCase();
-            renderTaskList(allEvents.filter(ev => ev.title.toLowerCase().includes(term) || ev.start.includes(term)));
-        });
-
-        function renderTaskList(events) {
-            const container = document.getElementById('task-list-container');
-            container.innerHTML = '';
-            if(events.length === 0) return container.innerHTML = '<div class="text-center text-muted py-5 opacity-50"><i class="fas fa-inbox fa-3x mb-3"></i><p>ไม่มีรายการ</p></div>';
-            events.forEach(ev => {
-                const d = new Date(ev.start);
-                container.innerHTML += `
-                    <div class="task-item" onclick="deleteTask('${ev.id}', '${ev.title}')">
-                        <div class="task-date-box">
-                            <div class="task-day">${d.getDate()}</div>
-                            <div class="task-month">${d.toLocaleDateString('th-TH', { month: 'short' })}</div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1 fw-bold" style="color: ${ev.backgroundColor}">${ev.title}</h6>
-                                <small class="text-muted">${ev.start}</small>
-                            </div>
-                            <small class="text-muted text-truncate d-block">${ev.details || 'ไม่มีรายละเอียด'}</small>
-                        </div>
-                    </div>`;
-            });
+        // --- Helper Function วาดสี่เหลี่ยมมุมมน ---
+        function drawRoundedRect(ctx, x, y, width, height, radius, color) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
         }
 
-        window.deleteTask = async (id, title) => {
-            const res = await Swal.fire({ title: `ลบ "${title}"?`, icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', confirmButtonColor: '#ff6b6b' });
-            if(res.isConfirmed) await deleteDoc(doc(db, "calendar_events", id));
+        // --- 3. Download Function ---
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'payment-card.png';
+            // แปลง canvas เป็นรูปภาพ base64
+            link.href = canvas.toDataURL('image/png');
+            link.click();
         }
     </script>
 </body>
