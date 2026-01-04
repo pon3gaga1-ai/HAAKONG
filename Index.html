@@ -3,202 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Smart Planner</title>
+    <title>Pro Planner - ปฏิทินมือโปร</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
-            --primary: #4e54c8;
-            --secondary: #8f94fb;
-            --accent: #ff6b6b;
-            --bg-color: #f4f6f9;
+            /* Theme Colors */
+            --primary-grad: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --secondary-grad: linear-gradient(135deg, #ff9a44 0%, #fc6076 100%);
+            --bg-color: #f8f9fd;
+            --text-dark: #2d3436;
+            --nav-height: 70px;
         }
 
         body {
             font-family: 'Prompt', sans-serif;
             background-color: var(--bg-color);
-            padding-bottom: 80px; /* เว้นที่ให้เมนูล่าง */
-            color: #333;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            color: var(--text-dark);
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* --- Page Transitions --- */
-        .page-section { display: none; animation: fadeIn 0.3s ease; }
+        .page-section { display: none; animation: fadeUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
         .page-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
-        /* --- Bottom Navigation --- */
+        /* --- Bottom Navigation (สวยขึ้น) --- */
         .bottom-nav {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            bottom: 0; left: 0; width: 100%;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
+            height: var(--nav-height);
+            align-items: center;
             z-index: 1000;
-            border-radius: 20px 20px 0 0;
+            border-radius: 25px 25px 0 0;
+            padding-bottom: env(safe-area-inset-bottom); /* รองรับ iPhone จอแหว่ง */
         }
 
         .nav-item {
-            text-align: center;
-            color: #b0b0b0;
-            background: none;
-            border: none;
-            flex: 1;
-            font-size: 0.8rem;
-            transition: all 0.2s;
+            border: none; background: none;
+            color: #b2bec3;
+            font-size: 1.5rem;
+            position: relative;
+            transition: all 0.3s;
         }
 
-        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 3px; }
-        .nav-item.active { color: var(--primary); transform: translateY(-5px); }
-        .nav-item.active i { filter: drop-shadow(0 4px 6px rgba(78, 84, 200, 0.3)); }
-
-        /* --- Cards & UI --- */
-        .custom-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            margin-bottom: 15px;
-            border: none;
+        .nav-item.active {
+            color: #2575fc;
+            transform: translateY(-5px);
+        }
+        .nav-item.active::after {
+            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 6px; background: #2575fc; border-radius: 50%;
         }
 
+        /* --- UI Elements --- */
         .header-title {
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 20px;
+            font-weight: 700; font-size: 1.5rem;
+            background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 25px;
         }
+        .custom-card {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: none;
+        }
+        .btn-grad { background: var(--primary-grad); border: none; color: white; font-weight: 600; }
 
-        /* FullCalendar Customization */
-        .fc-toolbar-title { font-size: 1.2rem !important; }
-        .fc-col-header-cell-cushion { text-decoration: none; color: #555; }
-        .fc-daygrid-day-number { text-decoration: none; color: #333; }
-        .fc-event { border-radius: 4px; border: none; font-size: 0.8rem; cursor: pointer; }
+        /* --- FullCalendar Beautification (แก้ให้สวย) --- */
+        .fc { --fc-border-color: transparent; --fc-today-bg-color: transparent; }
+        .fc-toolbar-title { font-size: 1.3rem !important; font-weight: 700; color: var(--text-dark); }
+        .fc-button-primary { background: white !important; border: none !important; color: var(--text-dark) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; font-weight: 600; }
+        .fc-col-header-cell { padding: 10px 0; color: #a4b0be; font-weight: 500; text-transform: uppercase; font-size: 0.8rem; }
+        .fc-daygrid-day-number { font-weight: 600; color: var(--text-dark); padding: 10px !important; }
+        
+        /* ไฮไลท์วันนี้เป็นวงกลม */
+        .fc-day-today .fc-daygrid-day-number {
+            background: var(--secondary-grad); color: white;
+            border-radius: 50%; width: 35px; height: 35px;
+            display: flex; align-items: center; justify-content: center; margin: 5px;
+        }
+        .fc-event { border-radius: 8px; border: none; font-weight: 500; padding: 3px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        /* Search List Items */
+        /* --- Task List Item --- */
         .task-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 5px solid #ddd;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px;
+            display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
         }
-        .task-date {
-            min-width: 60px;
-            text-align: center;
-            font-weight: bold;
-            color: var(--secondary);
-            margin-right: 15px;
-            line-height: 1.2;
+        .task-item:active { transform: scale(0.98); }
+        .task-date-box {
+            background: #f1f2f6; border-radius: 12px; padding: 10px; text-align: center; min-width: 65px; margin-right: 15px;
         }
-        .task-content h6 { margin: 0; font-weight: 600; }
-        .task-content small { color: #888; }
+        .task-day { font-size: 1.4rem; font-weight: 700; color: var(--text-dark); line-height: 1; }
+        .task-month { font-size: 0.8rem; color: #7f8c8d; }
+
+        /* Profile Page */
+        .profile-header { text-align: center; padding: 40px 0; }
+        .profile-avatar { width: 100px; height: 100px; background: var(--primary-grad); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; box-shadow: 0 10px 20px rgba(37, 117, 252, 0.3); }
     </style>
 </head>
 <body>
 
-    <div id="auth-section" class="container mt-5">
-        <div class="custom-card text-center py-5">
-            <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
-            <h3 class="fw-bold">Planner Login</h3>
-            <p class="text-muted">เข้าสู่ระบบเพื่อจัดการตารางชีวิต</p>
-            <input type="email" id="email" class="form-control mb-2" placeholder="Email">
-            <input type="password" id="password" class="form-control mb-3" placeholder="Password">
-            <button onclick="login()" class="btn btn-primary w-100 rounded-pill py-2">เข้าสู่ระบบ / สมัครใหม่</button>
+    <div id="auth-section" class="container d-flex align-items-center justify-content-center" style="min-height: 90vh;">
+        <div class="custom-card text-center p-5 w-100" style="max-width: 400px;">
+            <div class="mb-4"><i class="fas fa-rocket fa-4x" style="background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i></div>
+            <h3 class="fw-bold mb-4">ยินดีต้อนรับ</h3>
+            <div class="form-floating mb-3">
+                <input type="email" id="email" class="form-control rounded-4" placeholder="name@example.com">
+                <label class="text-muted">อีเมล</label>
+            </div>
+            <div class="form-floating mb-4">
+                <input type="password" id="password" class="form-control rounded-4" placeholder="Password">
+                <label class="text-muted">รหัสผ่าน</label>
+            </div>
+            <button onclick="login()" class="btn btn-grad w-100 py-3 rounded-pill fw-bold fs-5 shadow-sm">เข้าใช้งาน</button>
         </div>
     </div>
 
     <div id="app-section" class="d-none">
         
         <div id="page-calendar" class="page-section active container pt-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="header-title m-0"><i class="far fa-calendar-check"></i> ปฏิทินของฉัน</h4>
-                <button onclick="logout()" class="btn btn-sm btn-light text-danger"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-            <div class="custom-card p-2">
+            <h4 class="header-title">ปฏิทินของฉัน</h4>
+            <div class="custom-card p-3 overflow-hidden">
                 <div id="calendar"></div>
             </div>
         </div>
 
         <div id="page-add" class="page-section container pt-4">
-            <h4 class="header-title"><i class="fas fa-plus-circle"></i> เพิ่มรายการใหม่</h4>
-            
+            <h4 class="header-title">สร้างรายการใหม่</h4>
             <div class="custom-card">
-                <div class="mb-3">
-                    <label class="form-label text-muted small">หัวข้อกิจกรรม</label>
-                    <input type="text" id="add-title" class="form-control form-control-lg fw-bold" placeholder="เช่น ส่งการบ้าน, นัดหมอ">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label text-muted small">วันที่</label>
-                    <input type="date" id="add-date" class="form-control">
-                </div>
-
                 <div class="mb-4">
-                    <label class="form-label text-muted small">เลือกประเภท (สี)</label>
-                    <div class="d-flex gap-2">
+                    <input type="text" id="add-title" class="form-control form-control-lg border-0 fw-bold fs-4 p-0 mb-2" placeholder="ชื่อกิจกรรม..." style="box-shadow: none;">
+                    <input type="date" id="add-date" class="form-control border-0 p-0 text-muted" style="box-shadow: none; width: auto;">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-muted mb-3">ความสำคัญ (เลือกสี)</label>
+                    <div class="d-flex gap-3 justify-content-center">
                         <input type="radio" class="btn-check" name="color" id="c1" value="#ff6b6b" checked>
-                        <label class="btn btn-outline-danger flex-fill" for="c1">งานด่วน</label>
-
+                        <label class="btn rounded-circle p-3 shadow-sm" for="c1" style="background: #ff6b6b; border: 3px solid white; outline: 2px solid #ff6b6b;"></label>
+                        
                         <input type="radio" class="btn-check" name="color" id="c2" value="#4e54c8">
-                        <label class="btn btn-outline-primary flex-fill" for="c2">ทั่วไป</label>
+                        <label class="btn rounded-circle p-3 shadow-sm" for="c2" style="background: #4e54c8; border: 3px solid white; outline: 2px solid #4e54c8;"></label>
 
-                        <input type="radio" class="btn-check" name="color" id="c3" value="#1dd1a1">
-                        <label class="btn btn-outline-success flex-fill" for="c3">ส่วนตัว</label>
+                        <input type="radio" class="btn-check" name="color" id="c3" value="#feca57">
+                        <label class="btn rounded-circle p-3 shadow-sm" for="c3" style="background: #feca57; border: 3px solid white; outline: 2px solid #feca57;"></label>
                     </div>
                 </div>
-                
-                <div class="mb-3">
-                    <label class="form-label text-muted small">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
-                    <textarea id="add-details" class="form-control" rows="3"></textarea>
+                <div class="mb-4">
+                    <textarea id="add-details" class="form-control bg-light border-0 rounded-4 p-3" rows="4" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
                 </div>
-
-                <button onclick="saveEvent()" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm">
-                    <i class="fas fa-save"></i> บันทึกทันที
+                <button onclick="saveEvent()" class="btn btn-grad w-100 py-3 rounded-pill fw-bold shadow-sm">
+                    <i class="fas fa-check-circle me-2"></i> บันทึกกิจกรรม
                 </button>
             </div>
         </div>
 
         <div id="page-search" class="page-section container pt-4">
-            <h4 class="header-title"><i class="fas fa-search"></i> ค้นหารายการ</h4>
-            
-            <div class="custom-card p-3 mb-3 sticky-top" style="z-index: 900; top: 10px;">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" id="search-input" class="form-control border-start-0" placeholder="พิมพ์ชื่องาน หรือวันที่...">
-                </div>
+            <h4 class="header-title">รายการทั้งหมด</h4>
+            <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden bg-white p-1">
+                <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" id="search-input" class="form-control border-0 shadow-none bg-white" placeholder="ค้นหาจากชื่อ หรือ วันที่...">
             </div>
-
             <div id="task-list-container">
-                <div class="text-center text-muted py-5">
-                    <i class="fas fa-clipboard-list fa-3x mb-3 opacity-25"></i>
-                    <p>พิมพ์ค้นหา หรือเลื่อนดูรายการ</p>
                 </div>
+        </div>
+
+        <div id="page-profile" class="page-section container pt-4">
+            <h4 class="header-title">โปรไฟล์</h4>
+            <div class="custom-card profile-header">
+                <div class="profile-avatar"><i class="fas fa-user"></i></div>
+                <h5 class="fw-bold mb-1" id="profile-email">loading...</h5>
+                <p class="text-muted small">ผู้ใช้งาน</p>
+                <button onclick="logout()" class="btn btn-outline-danger rounded-pill px-4 mt-3 fw-bold">
+                    <i class="fas fa-sign-out-alt me-2"></i> ออกจากระบบ
+                </button>
+            </div>
+             <div class="custom-card mt-3 p-3 text-center text-muted small">
+                Pro Planner App v5.0
             </div>
         </div>
 
-        <div class="bottom-nav">
-            <button class="nav-item active" onclick="switchPage('calendar', this)">
-                <i class="fas fa-calendar-day"></i> ปฏิทิน
-            </button>
-            <button class="nav-item" onclick="switchPage('add', this)">
-                <i class="fas fa-plus-square"></i> บันทึก
-            </button>
-            <button class="nav-item" onclick="switchPage('search', this)">
-                <i class="fas fa-list-ul"></i> รายการ
-            </button>
+        <div class="bottom-nav shadow-lg">
+            <button class="nav-item active" onclick="switchPage('calendar', this)"><i class="fas fa-calendar-alt"></i></button>
+            <button class="nav-item" onclick="switchPage('add', this)"><i class="fas fa-plus-circle" style="font-size: 2rem; color: #2575fc; filter: drop-shadow(0 4px 8px rgba(37, 117, 252, 0.3));"></i></button>
+            <button class="nav-item" onclick="switchPage('search', this)"><i class="fas fa-stream"></i></button>
+            <button class="nav-item" onclick="switchPage('profile', this)"><i class="far fa-user-circle"></i></button>
         </div>
-
     </div>
 
     <script type="module">
@@ -206,7 +206,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, deleteDoc, doc, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Config เดิมของคุณ
         const firebaseConfig = {
             apiKey: "AIzaSyDT39HkTA1TLFKvuQNZcrNeIZMLANgy2z0",
             authDomain: "scan-4b703.firebaseapp.com",
@@ -220,29 +219,22 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        let currentUser = null;
-        let calendar;
-        let allEvents = []; // เก็บข้อมูลไว้ค้นหาหน้า Search
+        let currentUser = null, calendar, allEvents = [], unsubscribe;
 
-        // --- Auth Functions ---
         window.login = async () => {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
+            const e = document.getElementById('email').value; p = document.getElementById('password').value;
             try { await signInWithEmailAndPassword(auth, e, p); } 
-            catch { try { await createUserWithEmailAndPassword(auth, e, p); } catch(err){ Swal.fire('Error', err.message, 'error'); } }
+            catch { try { await createUserWithEmailAndPassword(auth, e, p); Swal.fire('ยินดีต้อนรับ', 'สมัครสมาชิกสำเร็จ', 'success'); } catch(err){ Swal.fire('Error', err.message, 'error'); } }
         };
-        window.logout = () => signOut(auth);
+        window.logout = () => { if(unsubscribe) unsubscribe(); signOut(auth); };
 
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
             if(user) {
                 document.getElementById('auth-section').classList.add('d-none');
                 document.getElementById('app-section').classList.remove('d-none');
-                
-                // ตั้งค่าเริ่มต้นวันที่ในหน้า Add เป็นวันนี้
+                document.getElementById('profile-email').innerText = user.email;
                 document.getElementById('add-date').valueAsDate = new Date();
-                
                 initApp();
             } else {
                 document.getElementById('auth-section').classList.remove('d-none');
@@ -250,149 +242,87 @@
             }
         });
 
-        // --- App Logic ---
         function initApp() {
-            // 1. Setup Calendar
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'th',
-                height: 'auto',
+                initialView: 'dayGridMonth', locale: 'th', height: 'auto',
                 headerToolbar: { left: 'title', right: 'prev,next' },
-                events: [], // จะถูกเติมโดย onSnapshot
+                dayHeaderFormat: { weekday: 'short' },
+                fixedWeekCount: false, showNonCurrentDates: false,
+                events: [], 
                 eventClick: (info) => deleteTask(info.event.id, info.event.title)
             });
             calendar.render();
 
-            // 2. Listen to Firebase Data
+            if(unsubscribe) unsubscribe();
             const q = query(collection(db, "calendar_events"), where("userId", "==", currentUser.uid), orderBy("date"));
-            onSnapshot(q, (snapshot) => {
+            unsubscribe = onSnapshot(q, (snapshot) => {
                 allEvents = [];
                 const calendarEvents = [];
-                
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const eventObj = {
-                        id: doc.id,
-                        title: data.title,
-                        start: data.date,
-                        backgroundColor: data.color,
-                        borderColor: data.color,
-                        details: data.details
-                    };
-                    calendarEvents.push(eventObj);
-                    allEvents.push(eventObj);
+                    const eventObj = { id: doc.id, title: data.title, start: data.date, backgroundColor: data.color, borderColor: 'transparent', details: data.details };
+                    calendarEvents.push(eventObj); allEvents.push(eventObj);
                 });
-
-                // Update Calendar
-                calendar.removeAllEvents();
-                calendar.addEventSource(calendarEvents);
-                
-                // Update List (ถ้าเปิดหน้า Search อยู่)
-                renderTaskList(allEvents);
+                calendar.removeAllEvents(); calendar.addEventSource(calendarEvents);
+                renderTaskList(allEvents); // อัปเดตหน้ารายการทันทีที่ข้อมูลเปลี่ยน
             });
         }
 
-        // --- Navigation Logic ---
         window.switchPage = (pageId, btn) => {
-            // Hide all pages
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            // Show target page
             document.getElementById('page-' + pageId).classList.add('active');
-            
-            // Update Nav Buttons
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
-
-            // Fix Calendar Rendering Bug when hidden
-            if(pageId === 'calendar' && calendar) {
-                setTimeout(() => calendar.render(), 100);
-            }
+            if(pageId === 'calendar' && calendar) setTimeout(() => calendar.render(), 150);
         };
 
-        // --- Save Function ---
         window.saveEvent = async () => {
             const title = document.getElementById('add-title').value;
             const date = document.getElementById('add-date').value;
             const details = document.getElementById('add-details').value;
             const color = document.querySelector('input[name="color"]:checked').value;
-
             if(!title || !date) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาใส่ชื่อและวันที่', 'warning');
-
             try {
-                await addDoc(collection(db, "calendar_events"), {
-                    userId: currentUser.uid, title, date, details, color, createdAt: new Date()
-                });
-                
-                Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', timer: 1500, showConfirmButton: false });
-                
-                // Reset Form
-                document.getElementById('add-title').value = '';
-                document.getElementById('add-details').value = '';
-                
-                // กลับไปหน้าปฏิทิน
-                document.querySelector('.bottom-nav button:first-child').click(); 
-
+                await addDoc(collection(db, "calendar_events"), { userId: currentUser.uid, title, date, details, color, createdAt: new Date() });
+                Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                document.getElementById('add-title').value = ''; document.getElementById('add-details').value = '';
+                // กลับหน้าปฏิทิน ข้อมูลจะอัปเดตเองอัตโนมัติจาก onSnapshot
+                switchPage('calendar', document.querySelector('.bottom-nav button:first-child'));
             } catch(e) { console.error(e); }
         };
 
-        // --- Search Logic ---
         document.getElementById('search-input').addEventListener('keyup', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = allEvents.filter(ev => 
-                ev.title.toLowerCase().includes(term) || 
-                ev.start.includes(term) ||
-                (ev.details && ev.details.toLowerCase().includes(term))
-            );
-            renderTaskList(filtered);
+            renderTaskList(allEvents.filter(ev => ev.title.toLowerCase().includes(term) || ev.start.includes(term)));
         });
 
         function renderTaskList(events) {
             const container = document.getElementById('task-list-container');
             container.innerHTML = '';
-            
-            if(events.length === 0) {
-                container.innerHTML = '<p class="text-center text-muted mt-5">ไม่พบรายการ</p>';
-                return;
-            }
-
+            if(events.length === 0) return container.innerHTML = '<div class="text-center text-muted py-5 opacity-50"><i class="fas fa-inbox fa-3x mb-3"></i><p>ไม่มีรายการ</p></div>';
             events.forEach(ev => {
-                // Format Date: 2023-10-25 -> 25 ต.ค.
                 const d = new Date(ev.start);
-                const day = d.getDate();
-                const month = d.toLocaleDateString('th-TH', { month: 'short' });
-
-                const html = `
-                    <div class="task-item" style="border-left-color: ${ev.backgroundColor}" onclick="deleteTask('${ev.id}', '${ev.title}')">
-                        <div class="task-date">
-                            <div style="font-size: 1.5rem;">${day}</div>
-                            <div style="font-size: 0.8rem;">${month}</div>
+                container.innerHTML += `
+                    <div class="task-item" onclick="deleteTask('${ev.id}', '${ev.title}')">
+                        <div class="task-date-box">
+                            <div class="task-day">${d.getDate()}</div>
+                            <div class="task-month">${d.toLocaleDateString('th-TH', { month: 'short' })}</div>
                         </div>
-                        <div class="task-content w-100">
-                            <div class="d-flex justify-content-between">
-                                <h6>${ev.title}</h6>
-                                <small class="text-muted"><i class="fas fa-clock"></i> ${ev.start}</small>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1 fw-bold" style="color: ${ev.backgroundColor}">${ev.title}</h6>
+                                <small class="text-muted">${ev.start}</small>
                             </div>
-                            <small class="d-block text-truncate" style="max-width: 200px;">${ev.details || '-'}</small>
+                            <small class="text-muted text-truncate d-block">${ev.details || 'ไม่มีรายละเอียด'}</small>
                         </div>
-                    </div>
-                `;
-                container.innerHTML += html;
+                    </div>`;
             });
         }
 
         window.deleteTask = async (id, title) => {
-            const res = await Swal.fire({
-                title: `ลบ "${title}" ไหม?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'ลบเลย',
-                confirmButtonColor: '#ff6b6b',
-                cancelButtonText: 'ยกเลิก'
-            });
-            if(res.isConfirmed) {
-                await deleteDoc(doc(db, "calendar_events", id));
-            }
+            const res = await Swal.fire({ title: `ลบ "${title}"?`, icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', confirmButtonColor: '#ff6b6b' });
+            if(res.isConfirmed) await deleteDoc(doc(db, "calendar_events", id));
         }
     </script>
 </body>
