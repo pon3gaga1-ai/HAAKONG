@@ -3,96 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Time Attendance - สแกนหน้าเข้างาน</title>
+    <title>Neon Calendar - ปฏิทินสุดคูล</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        body { background-color: #f0f2f5; font-family: 'Sarabun', sans-serif; }
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: #2d3436;
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        /* Customizing FullCalendar */
+        .fc-toolbar-title { font-size: 1.5rem !important; font-weight: 600; color: var(--primary); }
+        .fc-button-primary { background-color: var(--primary) !important; border: none !important; }
+        .fc-button-primary:hover { background-color: #5849c4 !important; }
+        .fc-daygrid-day.fc-day-today { background-color: rgba(162, 155, 254, 0.2) !important; }
+        .fc-event { cursor: pointer; border: none !important; padding: 2px 5px; }
         
-        .camera-container {
-            position: relative;
-            width: 100%;
-            max-width: 640px;
-            margin: 0 auto;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            background: #000;
-        }
+        /* Event Colors */
+        .event-work { background-color: #ff7675; }
+        .event-personal { background-color: #00cec9; }
+        .event-school { background-color: #fdcb6e; color: black; }
 
-        video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .status-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-        }
-
-        .log-box {
-            height: 300px;
-            overflow-y: auto;
-            background: white;
-            border-radius: 10px;
-            padding: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
+        .auth-box { max-width: 400px; margin: 10vh auto; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-dark bg-primary mb-4">
+    <nav class="navbar navbar-dark bg-transparent">
         <div class="container">
-            <span class="navbar-brand mb-0 h1">🤖 AI Face Check-in</span>
+            <a class="navbar-brand fw-bold" href="#"><i class="far fa-calendar-check"></i> Life Planner</a>
+            <div id="user-controls" class="d-none">
+                <span id="user-email" class="text-white me-2"></span>
+                <button onclick="logout()" class="btn btn-sm btn-outline-light rounded-pill">Logout</button>
+            </div>
         </div>
     </nav>
 
-    <div class="container">
+    <div id="auth-section" class="container">
+        <div class="glass-card auth-box text-center">
+            <h3 class="fw-bold mb-4 text-primary">เข้าสู่ระบบปฏิทิน</h3>
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email" placeholder="name@example.com">
+                <label>Email</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Password">
+                <label>Password</label>
+            </div>
+            <button onclick="login()" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">Login / Register</button>
+            <small class="d-block mt-3 text-muted">กดปุ่มเดิมเพื่อเข้าสู่ระบบหรือสมัครใหม่</small>
+        </div>
+    </div>
+
+    <div id="app-section" class="container-fluid px-4 d-none">
         <div class="row">
-            <div class="col-md-7 mb-4">
-                <div class="card border-0">
-                    <div class="card-body p-0">
-                        <div class="camera-container" id="camera-wrapper">
-                            <span class="badge bg-warning text-dark status-badge" id="status-text">⏳ กำลังโหลดโมเดล...</span>
-                            <video id="video" autoplay muted></video>
-                            </div>
+            <div class="col-lg-3 mb-4">
+                <div class="glass-card h-100">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-search"></i> ค้นหากิจกรรม</h5>
+                    
+                    <div class="mb-3">
+                        <label class="small text-muted">ดูรายการของวันที่...</label>
+                        <div class="input-group">
+                            <input type="date" id="search-date" class="form-control">
+                            <button class="btn btn-primary" onclick="searchByDate()"><i class="fas fa-arrow-right"></i></button>
+                        </div>
                     </div>
-                    <div class="card-footer bg-white d-flex justify-content-between p-3">
-                        <input type="text" id="employee-name" class="form-control me-2" placeholder="พิมพ์ชื่อพนักงาน (สำหรับลงทะเบียน)">
-                        <button class="btn btn-success text-nowrap" onclick="registerFace()" id="btn-register" disabled>
-                            <i class="fas fa-user-plus"></i> ลงทะเบียนหน้าใหม่
-                        </button>
-                    </div>
-                    <small class="text-muted ms-3 mb-2">* ถ้าจะสแกนเข้างาน ไม่ต้องพิมพ์ชื่อ แค่มองกล้อง</small>
+                    
+                    <button class="btn btn-outline-primary w-100 mb-2" onclick="checkToday()">
+                        วันนี้ต้องทำไรบ้าง?
+                    </button>
+                    <button class="btn btn-outline-secondary w-100 mb-4" onclick="checkTomorrow()">
+                        แล้วพรุ่งนี้ล่ะ?
+                    </button>
+
+                    <hr>
+                    <h6 class="fw-bold mt-4">หมวดหมู่สี</h6>
+                    <ul class="list-unstyled">
+                        <li><span class="badge bg-danger">●</span> งานด่วน/สำคัญ</li>
+                        <li><span class="badge bg-info text-dark">●</span> ส่วนตัว/ชิลๆ</li>
+                        <li><span class="badge bg-warning text-dark">●</span> การเรียน/โรงเรียน</li>
+                    </ul>
                 </div>
             </div>
 
-            <div class="col-md-5">
-                <h5 class="mb-3">🕒 ประวัติการสแกนล่าสุด</h5>
-                <div class="log-box" id="log-container">
-                    </div>
+            <div class="col-lg-9 mb-4">
+                <div class="glass-card">
+                    <div id="calendar"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- 1. Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyDT39HkTA1TLFKvuQNZcrNeIZMLANgy2z0",
             authDomain: "scan-4b703.firebaseapp.com",
@@ -102,166 +132,192 @@
             appId: "1:667992011250:web:adce534c0f97b4ddb47b6b",
             measurementId: "G-X5QG9YZWG6"
         };
+
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        let calendar;
+        let currentUser = null;
+        let unsubscribe = null;
 
-        // --- 2. Variables & Setup ---
-        const video = document.getElementById('video');
-        const wrapper = document.getElementById('camera-wrapper');
-        const statusText = document.getElementById('status-text');
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models'; // Public Models
-        let labeledFaceDescriptors = [];
-        let faceMatcher;
-        let canvas;
-        let isModelLoaded = false;
-        let lastCheckInTime = {}; // กันการ check-in รัวๆ
-
-        // --- 3. Load AI Models & Webcam ---
-        Promise.all([
-            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]).then(startVideo).catch(err => {
-            console.error(err);
-            statusText.innerText = "❌ โหลดโมเดลไม่สำเร็จ (เช็คเน็ต)";
-            statusText.className = "badge bg-danger status-badge";
-        });
-
-        function startVideo() {
-            navigator.mediaDevices.getUserMedia({ video: {} })
-                .then(stream => { video.srcObject = stream; })
-                .catch(err => console.error("Camera Error:", err));
-        }
-
-        // --- 4. Main Process Loop ---
-        video.addEventListener('play', async () => {
-            // โหลดข้อมูลหน้าคนจาก Firebase ก่อนเริ่ม
-            await loadLabeledImagesFromDB();
-            
-            isModelLoaded = true;
-            statusText.innerText = "✅ ระบบพร้อมทำงาน";
-            statusText.className = "badge bg-success status-badge";
-            document.getElementById('btn-register').disabled = false;
-
-            // สร้าง Canvas ทับวิดีโอ
-            canvas = faceapi.createCanvasFromMedia(video);
-            wrapper.append(canvas);
-            const displaySize = { width: video.width || 640, height: video.height || 480 };
-            faceapi.matchDimensions(canvas, displaySize);
-
-            // Loop ตรวจจับทุก 100ms
-            setInterval(async () => {
-                if(!isModelLoaded) return;
-
-                const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
-                const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                
-                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-
-                if (labeledFaceDescriptors.length > 0) {
-                    // สร้าง Matcher ใหม่ทุกครั้งเผื่อมีคนสมัครใหม่
-                    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
-                    
-                    const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
-
-                    results.forEach((result, i) => {
-                        const box = resizedDetections[i].detection.box;
-                        const { label, distance } = result;
-                        
-                        // วาดกรอบ
-                        const drawBox = new faceapi.draw.DrawBox(box, { label: label + ` (${Math.round((1-distance)*100)}%)` });
-                        drawBox.draw(canvas);
-
-                        // บันทึกการเข้างาน (ถ้ามั่นใจเกิน 50% และไม่ใช่ unknown)
-                        if (label !== 'unknown' && distance < 0.5) {
-                            recordAttendance(label);
-                        }
-                    });
-                } else {
-                    // กรณีไม่มีข้อมูลในฐานข้อมูลเลย
-                    faceapi.draw.drawDetections(canvas, resizedDetections);
-                }
-            }, 100);
-        });
-
-        // --- 5. Firebase Functions ---
-
-        // โหลดข้อมูลใบหน้าทั้งหมดจาก Firebase
-        async function loadLabeledImagesFromDB() {
-            const querySnapshot = await getDocs(collection(db, "faces"));
-            labeledFaceDescriptors = [];
-            
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                // แปลง Array ปกติ กลับเป็น Float32Array ที่ AI ใช้
-                const descriptor = new Float32Array(data.descriptor);
-                labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(data.name, [descriptor]));
-            });
-            console.log("Loaded faces:", labeledFaceDescriptors.length);
-        }
-
-        // ฟังก์ชันกดลงทะเบียน (Register)
-        window.registerFace = async () => {
-            const name = document.getElementById('employee-name').value.trim();
-            if (!name) return Swal.fire('แจ้งเตือน', 'กรุณาใส่ชื่อพนักงาน', 'warning');
-
-            statusText.innerText = "📸 กำลังประมวลผลใบหน้า...";
-            
-            // จับภาพหน้าเดียวที่ชัดที่สุด
-            const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-            
-            if (detection) {
-                // แปลง Float32Array เป็น Array ปกติเพื่อเก็บลง Firebase
-                const descriptorArray = Array.from(detection.descriptor);
-                
+        // --- Auth Logic ---
+        window.login = async () => {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, e, p);
+            } catch (err) {
                 try {
-                    await addDoc(collection(db, "faces"), {
-                        name: name,
-                        descriptor: descriptorArray,
-                        createdAt: serverTimestamp()
-                    });
-                    
-                    Swal.fire('สำเร็จ', `ลงทะเบียนคุณ ${name} เรียบร้อย!`, 'success');
-                    document.getElementById('employee-name').value = '';
-                    await loadLabeledImagesFromDB(); // โหลดข้อมูลใหม่เข้าหน่วยความจำ
-                    
-                } catch (e) {
-                    console.error(e);
-                    Swal.fire('Error', 'บันทึกไม่ผ่าน', 'error');
-                }
-            } else {
-                Swal.fire('ไม่พบใบหน้า', 'กรุณาขยับหน้าให้ชัดเจน หรือถอดแว่น/หน้ากาก', 'error');
+                    await createUserWithEmailAndPassword(auth, e, p);
+                    Swal.fire("ยินดีต้อนรับ", "สมัครสมาชิกสำเร็จ", "success");
+                } catch (err2) { Swal.fire("Error", err2.message, "error"); }
             }
-            statusText.innerText = "✅ ระบบพร้อมทำงาน";
         };
 
-        // ฟังก์ชันบันทึกเวลา (Check-in)
-        async function recordAttendance(name) {
-            const now = new Date();
-            // ป้องกันการยิงซ้ำภายใน 1 นาที
-            if (lastCheckInTime[name] && (now - lastCheckInTime[name]) < 60000) {
-                return;
-            }
-            
-            lastCheckInTime[name] = now;
-            
-            // แสดงบนหน้าเว็บ
-            const logContainer = document.getElementById('log-container');
-            const timeStr = now.toLocaleTimeString('th-TH');
-            const html = `
-                <div class="alert alert-success py-2 mb-2 fade show">
-                    <strong>${name}</strong> เข้างานเวลา ${timeStr}
-                </div>`;
-            logContainer.insertAdjacentHTML('afterbegin', html);
+        window.logout = () => signOut(auth);
 
-            // บันทึกลง Firebase
-            try {
-                await addDoc(collection(db, "attendance_logs"), {
-                    name: name,
-                    timestamp: serverTimestamp(),
-                    type: 'check-in'
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('auth-section').classList.add('d-none');
+                document.getElementById('app-section').classList.remove('d-none');
+                document.getElementById('user-controls').classList.remove('d-none');
+                document.getElementById('user-email').innerText = user.email;
+                initCalendar();
+            } else {
+                document.getElementById('auth-section').classList.remove('d-none');
+                document.getElementById('app-section').classList.add('d-none');
+                document.getElementById('user-controls').classList.add('d-none');
+            }
+        });
+
+        // --- Calendar Logic ---
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'th', // ภาษาไทย
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                height: 'auto',
+                events: async (info, successCallback, failureCallback) => {
+                    // Load Events from Firebase Realtime
+                    if(unsubscribe) unsubscribe();
+                    
+                    const q = query(collection(db, "calendar_events"), where("userId", "==", currentUser.uid));
+                    unsubscribe = onSnapshot(q, (snapshot) => {
+                        const events = snapshot.docs.map(doc => {
+                            const d = doc.data();
+                            return {
+                                id: doc.id,
+                                title: d.title,
+                                start: d.date,
+                                backgroundColor: d.color,
+                                borderColor: d.color,
+                                extendedProps: { details: d.details }
+                            };
+                        });
+                        successCallback(events);
+                    });
+                },
+                dateClick: handleDateClick,
+                eventClick: handleEventClick
+            });
+            calendar.render();
+        }
+
+        // 1. Add Event
+        async function handleDateClick(info) {
+            const { value: formValues } = await Swal.fire({
+                title: 'เพิ่มกิจกรรมใหม่',
+                html: `
+                    <input id="swal-title" class="swal2-input" placeholder="ทำอะไรดี? (เช่น ส่งงาน, ไปเที่ยว)">
+                    <select id="swal-type" class="swal2-select" style="display:flex; margin:10px auto; width:80%">
+                        <option value="#ff7675">🔥 งานด่วน</option>
+                        <option value="#00cec9">🏖️ ส่วนตัว/ชิลๆ</option>
+                        <option value="#fdcb6e">🎓 เรื่องเรียน</option>
+                    </select>
+                    <div style="margin-top:10px">วันที่: ${info.dateStr}</div>
+                `,
+                focusConfirm: false,
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-title').value,
+                        document.getElementById('swal-type').value
+                    ]
+                }
+            });
+
+            if (formValues && formValues[0]) {
+                try {
+                    await addDoc(collection(db, "calendar_events"), {
+                        userId: currentUser.uid,
+                        title: formValues[0],
+                        color: formValues[1],
+                        date: info.dateStr,
+                        createdAt: new Date()
+                    });
+                    // Calendar will auto update via onSnapshot
+                    Swal.fire('บันทึกแล้ว!', '', 'success');
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        // 2. Delete Event
+        async function handleEventClick(info) {
+            const result = await Swal.fire({
+                title: info.event.title,
+                text: "วันที่: " + info.event.start.toLocaleDateString('th-TH'),
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ลบรายการนี้',
+                cancelButtonText: 'ปิด'
+            });
+
+            if (result.isConfirmed) {
+                await deleteDoc(doc(db, "calendar_events", info.event.id));
+                info.event.remove();
+                Swal.fire('ลบเรียบร้อย', '', 'success');
+            }
+        }
+
+        // 3. Search Functions
+        window.searchByDate = async () => {
+            const dateInput = document.getElementById('search-date').value;
+            if(!dateInput) return;
+            
+            showEventsForDate(dateInput, "รายการวันที่เลือก");
+        };
+
+        window.checkToday = () => {
+            const today = new Date().toISOString().split('T')[0];
+            showEventsForDate(today, "วันนี้ต้องทำอะไรบ้าง?");
+        };
+
+        window.checkTomorrow = () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dateStr = tomorrow.toISOString().split('T')[0];
+            showEventsForDate(dateStr, "พรุ่งนี้ต้องทำอะไรบ้าง?");
+        };
+
+        async function showEventsForDate(dateStr, title) {
+            // Query specific date
+            const q = query(
+                collection(db, "calendar_events"), 
+                where("userId", "==", currentUser.uid),
+                where("date", "==", dateStr)
+            );
+            
+            const snapshot = await getDocs(q);
+            let html = '';
+            
+            if(snapshot.empty) {
+                html = '<p class="text-muted">-- ว่างจ้า ไม่มีงาน --</p>';
+            } else {
+                html = '<ul class="list-group text-start">';
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    html += `<li class="list-group-item" style="border-left: 5px solid ${d.color}">
+                        ${d.title}
+                    </li>`;
                 });
-            } catch (e) { console.error("Log error", e); }
+                html += '</ul>';
+            }
+
+            Swal.fire({
+                title: title,
+                html: html,
+                footer: `วันที่: ${dateStr}`
+            });
+            
+            // Jump calendar to that date
+            calendar.gotoDate(dateStr);
         }
 
     </script>
