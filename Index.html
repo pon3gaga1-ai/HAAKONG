@@ -2,318 +2,407 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Card Generator - สร้างรูปรับเงินสวยๆ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Money Link - รวมบัญชีรับเงิน</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         :root {
-            --primary: #4e54c8;
-            --bg-color: #f4f7f6;
+            --primary: #2563eb;
+            --secondary: #3b82f6;
+            --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #cbebff 100%);
         }
 
         body {
             font-family: 'Prompt', sans-serif;
-            background-color: var(--bg-color);
-            padding: 20px;
-            color: #333;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: #334155;
         }
 
-        .main-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
+        /* Card Styles */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.8);
             overflow: hidden;
         }
 
-        .form-section { padding: 30px; }
-        .preview-section {
-            background: #e9ecef;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 500px;
-        }
+        .auth-box { max-width: 400px; margin: 5vh auto; padding: 30px; }
+        .main-box { max-width: 800px; margin: 20px auto; padding: 20px; }
 
-        .form-label { font-weight: 600; color: var(--primary); font-size: 0.9rem; }
-        .form-control { border-radius: 10px; padding: 12px; border: 2px solid #eee; }
-        .form-control:focus { border-color: var(--primary); box-shadow: none; }
-
-        .qr-upload-box {
-            border: 3px dashed #cbd5e0;
+        /* Secret Code Badge */
+        .secret-code-display {
+            background: linear-gradient(45deg, #2563eb, #4f46e5);
+            color: white;
+            padding: 15px;
             border-radius: 15px;
-            padding: 20px;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #f8fafc;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
         }
-        .qr-upload-box:hover { border-color: var(--primary); background: #f0f4ff; }
-        #qr-preview-img { max-width: 150px; max-height: 150px; object-fit: contain; display: none; margin: 10px auto; border-radius: 8px; border: 2px solid #eee; }
+        .code-text { font-size: 2.5rem; font-weight: 800; letter-spacing: 5px; font-family: monospace; }
 
-        /* Canvas styling */
-        #result-canvas {
-            max-width: 100%;
-            height: auto;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        /* Bank Card Item */
+        .bank-card {
+            background: white;
             border-radius: 16px;
-            /* ซ่อนไว้ก่อนจนกว่าจะกดสร้าง */
-            display: none; 
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: transform 0.2s;
+            border-left: 6px solid #ccc;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
-
-        .placeholder-preview {
-            text-align: center; color: #adb5bd;
-            display: flex; flex-direction: column; align-items: center;
-        }
+        .bank-card:active { transform: scale(0.98); }
         
-        .btn-generate {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none; font-weight: 600; letter-spacing: 1px;
+        /* Bank Colors (Border) */
+        .bank-kbank { border-left-color: #138f2d; } /* กสิกร */
+        .bank-scb { border-left-color: #4e2e7f; } /* ไทยพาณิชย์ */
+        .bank-ktb { border-left-color: #00a5e5; } /* กรุงไทย */
+        .bank-bbl { border-left-color: #1e4598; } /* กรุงเทพ */
+        .bank-promptpay { border-left-color: #003d68; } /* พร้อมเพย์ */
+
+        .copy-btn {
+            background: #f1f5f9; color: #475569;
+            border: none; padding: 8px 15px; border-radius: 50px;
+            font-size: 0.8rem; font-weight: 600;
+            transition: all 0.2s;
         }
-         .btn-download {
-            background: #2d3436; border: none; font-weight: 600;
+        .copy-btn:hover { background: #e2e8f0; color: var(--primary); }
+
+        /* Tabs */
+        .nav-pills .nav-link {
+            border-radius: 50px; color: #64748b; padding: 10px 20px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--primary); color: white;
         }
     </style>
 </head>
 <body>
 
-    <div class="container py-4">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold"><i class="fas fa-magic text-primary"></i> สร้างการ์ดรับเงินสุดคูล</h2>
-            <p class="text-muted">กรอกข้อมูล อัปโหลด QR แล้วให้ระบบออกแบบให้!</p>
+    <nav class="navbar navbar-light bg-transparent py-3">
+        <div class="container d-flex justify-content-between">
+            <a class="navbar-brand fw-bold text-primary" href="#"><i class="fas fa-wallet"></i> MoneyLink</a>
+            <button onclick="logout()" id="logout-btn" class="btn btn-sm btn-outline-danger rounded-pill d-none">Logout</button>
         </div>
+    </nav>
 
-        <div class="main-container row g-0">
-            <div class="col-lg-5 form-section order-2 order-lg-1">
-                <h5 class="mb-4 fw-bold"><i class="fas fa-edit me-2"></i>ข้อมูลบัญชีของคุณ</h5>
-                
-                <div class="mb-4">
-                    <label class="form-label">1. รูป QR Code รับเงิน</label>
-                    <input type="file" id="qr-upload" accept="image/*" hidden>
-                    <div class="qr-upload-box" onclick="document.getElementById('qr-upload').click()">
-                        <i class="fas fa-qrcode fa-3x text-muted mb-2" id="upload-icon"></i>
-                        <p class="mb-0 text-muted" id="upload-text">คลิกเพื่อเลือกรูป QR Code</p>
-                        <img id="qr-preview-img" alt="QR Preview">
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="bank-name" class="form-label">ชื่อธนาคาร / ช่องทาง</label>
-                    <input type="text" id="bank-name" class="form-control" placeholder="เช่น กสิกรไทย, พร้อมเพย์">
-                </div>
-                
-                <div class="mb-3">
-                    <label for="acc-name" class="form-label">ชื่อบัญชี</label>
-                    <input type="text" id="acc-name" class="form-control" placeholder="เช่น นายสมชาย ใจดี">
-                </div>
-                
-                <div class="mb-3">
-                   <label for="acc-num" class="form-label">เลขที่บัญชี / เบอร์โทร</label>
-                   <input type="text" id="acc-num" class="form-control font-monospace" placeholder="เช่น 123-4-56789-0">
-                </div>
-
-                 <div class="mb-4">
-                   <label for="amount-text" class="form-label">ยอดเงิน (ถ้ามี)</label>
-                   <input type="text" id="amount-text" class="form-control fw-bold text-success" placeholder="เช่น 500 บาท (เว้นว่างได้)">
-                </div>
-
-                <button onclick="generateCard()" class="btn btn-primary btn-generate w-100 py-3 rounded-pill shadow mb-3">
-                    <i class="fas fa-wand-magic-sparkles me-2"></i> สร้างรูปภาพสวยๆ
-                </button>
+    <div id="auth-section" class="container">
+        <div class="glass-card auth-box text-center">
+            <h3 class="fw-bold mb-4">เข้าสู่ระบบ</h3>
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email" placeholder="Email">
+                <label>อีเมล</label>
             </div>
-
-            <div class="col-lg-7 preview-section order-1 order-lg-2">
-                 <h5 class="mb-3 fw-bold text-muted">ตัวอย่างรูปภาพ</h5>
-                <canvas id="result-canvas" width="600" height="800"></canvas>
-                
-                <div class="placeholder-preview" id="placeholder-box">
-                    <i class="fas fa-image fa-5x mb-3 opacity-25"></i>
-                    <p>รูปภาพที่สร้างจะปรากฏที่นี่</p>
-                </div>
-
-                <div id="download-area" class="mt-4 d-none text-center">
-                    <p class="text-muted small mb-2">ถ้าไม่ชอบ กดสร้างใหม่เพื่อสุ่มดีไซน์</p>
-                    <button onclick="downloadImage()" class="btn btn-dark btn-download rounded-pill px-5 py-2 shadow-sm">
-                        <i class="fas fa-download me-2"></i> บันทึกรูปลงเครื่อง
-                    </button>
-                </div>
+            <div class="form-floating mb-4">
+                <input type="password" class="form-control" id="password" placeholder="Password">
+                <label>รหัสผ่าน</label>
             </div>
-        </div>
-        <div class="text-center mt-3 text-muted small">
-            *การประมวลผลภาพเกิดขึ้นบนเครื่องของคุณ ข้อมูลปลอดภัย
+            <button onclick="authAction()" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">Login / Register</button>
+            <p class="mt-3 text-muted small">กดปุ่มเพื่อเข้าสู่ระบบ หรือสมัครใหม่ทันที</p>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        let uploadedQRImage = null;
-        const canvas = document.getElementById('result-canvas');
-        const ctx = canvas.getContext('2d');
+    <div id="app-section" class="container d-none">
+        <div class="main-box">
+            
+            <ul class="nav nav-pills nav-fill mb-4 p-1 bg-white rounded-pill shadow-sm" style="max-width: 400px; margin: 0 auto;">
+                <li class="nav-item">
+                    <button class="nav-link active" onclick="switchTab('search')"><i class="fas fa-search me-1"></i> ค้นหา</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchTab('manage')"><i class="fas fa-user-cog me-1"></i> บัญชีของฉัน</button>
+                </li>
+            </ul>
 
-        // Color Palettes สำหรับสุ่มดีไซน์
-        const themes = [
-            { bg: ['#a1c4fd', '#c2e9fb'], accent: '#2b6cb0', text: '#1a202c' }, // ฟ้าสดใส
-            { bg: ['#fbc2eb', '#a6c1ee'], accent: '#6b46c1', text: '#2d3748' }, // ชมพูม่วง
-            { bg: ['#84fab0', '#8fd3f4'], accent: '#2f855a', text: '#1c4532' }, // เขียวมิ้นท์
-            { bg: ['#fccb90', '#d57eeb'], accent: '#b83280', text: '#4a1d34' }, // ส้มชมพู
-            { bg: ['#e0c3fc', '#8ec5fc'], accent: '#4c51bf', text: '#1e1b4b' }, // ม่วงฟ้า
-            { bg: ['#fad0c4', '#ffd1ff'], accent: '#c53030', text: '#4a1d1f' }  // พีช
-        ];
-
-        // --- 1. Handle QR Upload Preivew ---
-        document.getElementById('qr-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    // โหลดรูปลง memory เพื่อรอวาดลง canvas
-                    uploadedQRImage = new Image();
-                    uploadedQRImage.src = event.target.result;
+            <div id="tab-search">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold text-dark">โอนเงินให้ใครดี?</h2>
+                    <p class="text-muted">กรอกรหัสลับ 6 หลักของเพื่อน เพื่อดูเลขบัญชี</p>
                     
-                    // แสดง preview เล็กๆ ในกล่องอัปโหลด
-                    document.getElementById('qr-preview-img').src = event.target.result;
-                    document.getElementById('qr-preview-img').style.display = 'block';
-                    document.getElementById('upload-icon').style.display = 'none';
-                    document.getElementById('upload-text').innerText = 'เปลี่ยนรูป QR Code';
+                    <div class="input-group shadow rounded-pill overflow-hidden bg-white mt-4" style="max-width: 500px; margin: 0 auto;">
+                        <input type="text" id="search-code" class="form-control border-0 py-3 ps-4 fs-5" placeholder="ใส่รหัสลับ (เช่น X9A2B1)" style="letter-spacing: 2px; text-transform: uppercase;">
+                        <button class="btn btn-primary px-4 fw-bold" onclick="searchProfile()">ค้นหา <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div id="search-result" class="d-none">
+                    <h5 class="fw-bold border-start border-4 border-primary ps-3 mb-3">บัญชีของ: <span id="result-owner-name" class="text-primary">...</span></h5>
+                    <div id="result-list">
+                        </div>
+                </div>
+            </div>
+
+            <div id="tab-manage" class="d-none">
+                <div class="glass-card p-4 mb-4">
+                    <div class="text-center">
+                        <small class="text-uppercase text-muted fw-bold">รหัสลับของคุณ (ส่งให้คนโอน)</small>
+                        <div class="secret-code-display mt-2">
+                            <span id="my-secret-code" class="code-text">LOADING</span>
+                        </div>
+                        <button class="btn btn-sm btn-light rounded-pill text-primary" onclick="copyCode()"><i class="far fa-copy"></i> คัดลอกรหัส</button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0">รายการบัญชีของคุณ</h5>
+                    <button class="btn btn-primary btn-sm rounded-pill" onclick="openAddModal()"><i class="fas fa-plus"></i> เพิ่มบัญชี</button>
+                </div>
+
+                <div id="my-account-list">
+                    <p class="text-center text-muted py-4">ยังไม่มีบัญชี กดปุ่ม + เพื่อเพิ่มเลย</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Config เดิมของคุณ
+        const firebaseConfig = {
+            apiKey: "AIzaSyDT39HkTA1TLFKvuQNZcrNeIZMLANgy2z0",
+            authDomain: "scan-4b703.firebaseapp.com",
+            projectId: "scan-4b703",
+            storageBucket: "scan-4b703.firebasestorage.app",
+            messagingSenderId: "667992011250",
+            appId: "1:667992011250:web:adce534c0f97b4ddb47b6b",
+            measurementId: "G-X5QG9YZWG6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUser = null;
+
+        // --- Auth System ---
+        window.authAction = async () => {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            if(!e || !p) return Swal.fire('แจ้งเตือน','กรุณากรอกข้อมูลให้ครบ','warning');
+
+            try {
+                // ลอง Login ก่อน
+                await signInWithEmailAndPassword(auth, e, p);
+            } catch (err) {
+                // ถ้า Login ไม่ได้ ให้ลองสมัคร (Register)
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, e, p);
+                    // สร้างรหัสลับ (Secret Code) 6 หลัก
+                    const secretCode = generateSecretCode();
+                    // บันทึก User Profile ลง Firestore
+                    await setDoc(doc(db, "users", userCredential.user.uid), {
+                        email: e,
+                        secretCode: secretCode,
+                        createdAt: new Date()
+                    });
+                    Swal.fire("สำเร็จ", `สมัครสมาชิกเรียบร้อย! รหัสลับของคุณคือ ${secretCode}`, "success");
+                } catch (err2) {
+                    Swal.fire("Error", err2.message, "error");
                 }
-                reader.readAsDataURL(file);
+            }
+        };
+
+        function generateSecretCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // ตัดตัว I,O,1,0 ออกกันงง
+            let result = '';
+            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            return result;
+        }
+
+        window.logout = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('auth-section').classList.add('d-none');
+                document.getElementById('app-section').classList.remove('d-none');
+                document.getElementById('logout-btn').classList.remove('d-none');
+                
+                // โหลดรหัสลับของตัวเอง
+                loadMyProfile();
+                // โหลดบัญชีธนาคารของตัวเอง
+                loadMyAccounts();
+                // เด้งไปหน้า Manage อัตโนมัติ
+                switchTab('manage');
+            } else {
+                document.getElementById('auth-section').classList.remove('d-none');
+                document.getElementById('app-section').classList.add('d-none');
+                document.getElementById('logout-btn').classList.add('d-none');
             }
         });
 
-        // --- 2. The "AI" Drawing Logic (Canvas) ---
-        function generateCard() {
-            // Validate input
-            if (!uploadedQRImage) return Swal.fire('ลืมอะไรไปหรือเปล่า?', 'กรุณาอัปโหลดรูป QR Code ก่อนนะครับ', 'warning');
-            const bankName = document.getElementById('bank-name').value || 'ช่องทางชำระเงิน';
-            const accName = document.getElementById('acc-name').value || '-';
-            const accNum = document.getElementById('acc-num').value || '-';
-            const amount = document.getElementById('amount-text').value;
+        // --- Data Loading ---
+        async function loadMyProfile() {
+            const userDoc = await getDocs(query(collection(db, "users"), where("email", "==", currentUser.email)));
+            if(!userDoc.empty) {
+                const data = userDoc.docs[0].data();
+                document.getElementById('my-secret-code').innerText = data.secretCode;
+            }
+        }
 
-            // 2.1 สุ่มธีมสี
-            const theme = themes[Math.floor(Math.random() * themes.length)];
-            
-            // 2.2 เริ่มวาดพื้นหลัง (Gradient)
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            gradient.addColorStop(0, theme.bg[0]);
-            gradient.addColorStop(1, theme.bg[1]);
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function loadMyAccounts() {
+            const q = query(collection(db, "bank_accounts"), where("userId", "==", currentUser.uid));
+            onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('my-account-list');
+                list.innerHTML = '';
+                if(snapshot.empty) {
+                    list.innerHTML = '<p class="text-center text-muted mt-3">ยังไม่มีบัญชี</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    list.innerHTML += createBankCardHTML(d, true, doc.id); // true = เป็นเจ้าของ (มีปุ่มลบ)
+                });
+            });
+        }
 
-            // วาดลวดลายพื้นหลัง (วงกลมใสๆ) เพื่อความสวยงาม
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            for(let i=0; i<5; i++) {
-                 ctx.beginPath();
-                 ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*150 + 50, 0, Math.PI*2);
-                 ctx.fill();
+        // --- Search System ---
+        window.searchProfile = async () => {
+            const code = document.getElementById('search-code').value.toUpperCase().trim();
+            if(!code) return;
+
+            // 1. หา UID จาก Secret Code
+            const userQuery = query(collection(db, "users"), where("secretCode", "==", code));
+            const userSnap = await getDocs(userQuery);
+
+            if(userSnap.empty) {
+                Swal.fire('ไม่พบผู้ใช้', 'รหัสลับไม่ถูกต้อง', 'error');
+                return;
             }
 
-            // 2.3 วาดการ์ดสีขาวตรงกลาง (Rounded Rectangle Placeholder)
-            const cardX = 50, cardY = 100, cardW = 500, cardH = 600;
-            drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 30, '#ffffff');
-            // เพิ่มเงาให้การ์ด (วาดซ้ำแบบเบลอๆ ด้านหลัง - เทคนิค canvas)
-            ctx.shadowColor = "rgba(0,0,0,0.15)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 15;
-            drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 30, '#ffffff');
-            ctx.shadowColor = "transparent"; // Reset shadow
-
-            // 2.4 วาดหัวข้อ (Header)
-            ctx.fillStyle = theme.accent;
-            ctx.font = "bold 32px 'Prompt', sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("สแกนเพื่อชำระเงิน", canvas.width / 2, cardY + 60);
+            const targetUser = userSnap.docs[0].data();
+            const targetUid = userSnap.docs[0].id;
             
-            ctx.fillStyle = theme.text;
-            ctx.font = "500 18px 'Prompt', sans-serif";
-            ctx.fillText("Payment Details", canvas.width / 2, cardY + 90);
+            document.getElementById('result-owner-name').innerText = targetUser.email.split('@')[0]; // โชว์ชื่อหน้า email
 
-            // --- เส้นคั่น ---
-            ctx.strokeStyle = '#eee'; ctx.lineWidth = 2; ctx.beginPath();
-            ctx.moveTo(cardX + 50, cardY + 120); ctx.lineTo(cardX + cardW - 50, cardY + 120); ctx.stroke();
+            // 2. ดึงบัญชีธนาคารของ UID นั้น
+            const bankQuery = query(collection(db, "bank_accounts"), where("userId", "==", targetUid));
+            const bankSnap = await getDocs(bankQuery);
 
-            // 2.5 วาด QR Code (สำคัญมาก)
-            const qrSize = 220;
-            const qrX = (canvas.width - qrSize) / 2;
-            const qrY = cardY + 150;
-            // วาดกรอบ QR สีตามธีม
-            drawRoundedRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 15, theme.bg[0]); // กรอบนอก
-            drawRoundedRect(ctx, qrX - 5, qrY - 5, qrSize + 10, qrSize + 10, 12, '#ffffff'); // กรอบในสีขาว
-            // วาดรูป QR จริงๆ
-            ctx.drawImage(uploadedQRImage, qrX, qrY, qrSize, qrSize);
-
-            // 2.6 วาดข้อมูลธนาคาร (Text Details)
-            let textY = qrY + qrSize + 60;
+            const resultList = document.getElementById('result-list');
+            resultList.innerHTML = '';
             
-            // ชื่อธนาคาร
-            ctx.fillStyle = theme.accent;
-            ctx.font = "bold 24px 'Prompt', sans-serif";
-            ctx.fillText(bankName, canvas.width / 2, textY);
-            
-            // เลขบัญชี (ตัวใหญ่หน่อย)
-            textY += 45;
-            ctx.fillStyle = '#333';
-            ctx.font = "bold 36px 'Prompt', monospace"; // ใช้ monospace ให้เลขสวย
-            ctx.fillText(accNum, canvas.width / 2, textY);
-            
-            // ชื่อบัญชี
-            textY += 40;
-            ctx.fillStyle = '#666';
-            ctx.font = "500 20px 'Prompt', sans-serif";
-            ctx.fillText(accName, canvas.width / 2, textY);
-
-             // ยอดเงิน (ถ้ามี)
-            if(amount) {
-                textY += 70;
-                 // วาดพื้นหลังยอดเงิน
-                drawRoundedRect(ctx, cardX + 80, textY - 40, cardW - 160, 60, 30, theme.bg[1]);
-                ctx.fillStyle = theme.accent;
-                ctx.font = "bold 28px 'Prompt', sans-serif";
-                ctx.fillText(`ยอดโอน: ${amount}`, canvas.width / 2, textY);
+            if(bankSnap.empty) {
+                resultList.innerHTML = '<p class="text-muted">ผู้ใช้นี้ยังไม่ได้เพิ่มบัญชี</p>';
+            } else {
+                bankSnap.forEach(doc => {
+                    resultList.innerHTML += createBankCardHTML(doc.data(), false, null); // false = คนอื่นดู (ไม่มีปุ่มลบ)
+                });
             }
 
-            // 2.7 วาด Footer เล็กๆ
-            ctx.fillStyle = '#999';
-            ctx.font = "14px 'Prompt', sans-serif";
-            ctx.fillText("ขอบคุณที่ใช้บริการ", canvas.width / 2, cardY + cardH - 30);
+            document.getElementById('search-result').classList.remove('d-none');
+        };
 
-            // --- แสดงผล ---
-            document.getElementById('placeholder-box').style.display = 'none';
-            canvas.style.display = 'block';
-            document.getElementById('download-area').classList.remove('d-none');
+        // --- HTML Generator ---
+        function createBankCardHTML(data, isOwner, docId) {
+            // Mapping ชื่อธนาคารกับ class สี (ง่ายๆ)
+            let bankClass = 'bank-promptpay';
+            if(data.bankName.includes('กสิกร')) bankClass = 'bank-kbank';
+            else if(data.bankName.includes('ไทยพาณิชย์')) bankClass = 'bank-scb';
+            else if(data.bankName.includes('กรุงไทย')) bankClass = 'bank-ktb';
+            else if(data.bankName.includes('กรุงเทพ')) bankClass = 'bank-bbl';
+
+            let btnAction = '';
+            if(isOwner) {
+                btnAction = `<button class="btn btn-sm text-danger ms-2" onclick="deleteAccount('${docId}')"><i class="fas fa-trash"></i></button>`;
+            }
+
+            return `
+            <div class="bank-card ${bankClass}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted small mb-1">${data.bankName}</div>
+                        <h4 class="fw-bold m-0" style="letter-spacing:1px; font-family:monospace">${data.accountNumber}</h4>
+                        <div class="text-dark mt-1">${data.accountName}</div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button class="copy-btn shadow-sm" onclick="copyText('${data.accountNumber}')">
+                            <i class="far fa-copy"></i> คัดลอก
+                        </button>
+                        ${btnAction}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // --- Actions ---
+        window.openAddModal = async () => {
+            const { value: formValues } = await Swal.fire({
+                title: 'เพิ่มบัญชีใหม่',
+                html: `
+                    <select id="swal-bank" class="swal2-select w-75 mb-3">
+                        <option value="กสิกรไทย">กสิกรไทย (KBANK)</option>
+                        <option value="ไทยพาณิชย์">ไทยพาณิชย์ (SCB)</option>
+                        <option value="กรุงไทย">กรุงไทย (KTB)</option>
+                        <option value="กรุงเทพ">กรุงเทพ (BBL)</option>
+                        <option value="พร้อมเพย์">พร้อมเพย์ (PromptPay)</option>
+                        <option value="TrueMoney">TrueMoney Wallet</option>
+                    </select>
+                    <input id="swal-acc-num" class="swal2-input" placeholder="เลขบัญชี / เบอร์โทร">
+                    <input id="swal-acc-name" class="swal2-input" placeholder="ชื่อบัญชี (ภาษาไทย/อังกฤษ)">
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-bank').value,
+                        document.getElementById('swal-acc-num').value,
+                        document.getElementById('swal-acc-name').value
+                    ]
+                }
+            });
+
+            if (formValues && formValues[1]) {
+                await addDoc(collection(db, "bank_accounts"), {
+                    userId: currentUser.uid,
+                    bankName: formValues[0],
+                    accountNumber: formValues[1],
+                    accountName: formValues[2],
+                    createdAt: new Date()
+                });
+                Swal.fire('บันทึกสำเร็จ', '', 'success');
+            }
+        };
+
+        window.deleteAccount = async (id) => {
+            const res = await Swal.fire({ title: 'ลบบัญชีนี้?', icon: 'warning', showCancelButton: true });
+            if(res.isConfirmed) await deleteDoc(doc(db, "bank_accounts", id));
+        };
+
+        window.copyText = (text) => {
+            navigator.clipboard.writeText(text);
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000 });
+            Toast.fire({ icon: 'success', title: 'คัดลอกเลขบัญชีแล้ว' });
+        };
+        
+        window.copyCode = () => {
+            const code = document.getElementById('my-secret-code').innerText;
+            window.copyText(code);
+        }
+
+        // UI Tabs
+        window.switchTab = (tabName) => {
+            document.getElementById('tab-search').classList.add('d-none');
+            document.getElementById('tab-manage').classList.add('d-none');
+            document.getElementById('tab-' + tabName).classList.remove('d-none');
             
-            Swal.fire({ icon: 'success', title: 'สร้างรูปสำเร็จ!', text: 'ถ้าไม่ชอบสี กดสร้างใหม่ได้เลย', timer: 1500, showConfirmButton: false });
-        }
-
-        // --- Helper Function วาดสี่เหลี่ยมมุมมน ---
-        function drawRoundedRect(ctx, x, y, width, height, radius, color) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-            ctx.fillStyle = color;
-            ctx.fill();
-        }
-
-        // --- 3. Download Function ---
-        function downloadImage() {
-            const link = document.createElement('a');
-            link.download = 'payment-card.png';
-            // แปลง canvas เป็นรูปภาพ base64
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active'); // บรรทัดนี้อาจ error ถ้าเรียกจาก code โดยไม่มี event แต่ไม่เป็นไร
+            // Hack fix for tab active state when called from code
+            if(tabName === 'manage') document.querySelector('.nav-link:nth-child(2)').classList.add('active');
+        };
     </script>
 </body>
 </html>
