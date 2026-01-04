@@ -3,98 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Item Tracker - หาของอัจฉริยะ</title>
+    <title>Modern Item Tracker - หาของสไตล์ใหม่</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
-        
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; }
-        
-        /* Map Styles */
-        .map-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 66%; /* Aspect Ratio 3:2 */
-            background-color: #e9ecef;
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --bg-color: #f8f9fd;
+            --card-hover-transform: translateY(-5px);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-color);
+            color: #2d3436;
+        }
+
+        .navbar { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+        .btn-primary { background-color: var(--primary-color); border: none; }
+        .btn-primary:hover { background-color: #5849c4; }
+        .text-primary-custom { color: var(--primary-color); }
+
+        /* Card Animations & Styling */
+        .item-card {
+            border: none;
             border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            background: white;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 3px solid #fff;
-            cursor: crosshair;
-            transition: all 0.3s;
+            border-left: 4px solid transparent;
         }
 
-        .map-image {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            /* เปลี่ยนรูปแผนที่บ้านตรงนี้ */
-            background-image: url('https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?auto=format&fit=crop&w=1000&q=80');
-            background-size: cover;
-            background-position: center;
+        .item-card:hover {
+            transform: var(--card-hover-transform);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         }
-
-        /* Marker Styles */
-        .marker {
-            position: absolute;
-            transform: translate(-50%, -100%); /* ปักที่ปลายแหลม */
-            font-size: 24px;
-            color: #dc3545;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.4);
-            cursor: pointer;
-            transition: transform 0.2s;
-            z-index: 10;
-        }
-        .marker:hover { transform: translate(-50%, -120%) scale(1.2); color: #ffc107; }
         
-        .marker-label {
-            position: absolute;
-            top: -30px; left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-        }
-        .marker:hover .marker-label { opacity: 1; }
-
-        /* Search Highlight */
-        .marker.dimmed { opacity: 0.2; }
-        .marker.highlighted { z-index: 20; animation: bounce 1s infinite; }
-
-        @keyframes bounce {
-            0%, 100% { transform: translate(-50%, -100%); }
-            50% { transform: translate(-50%, -130%); }
+        .zone-badge {
+            background: #ffeaa7;
+            color: #d63031;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
         }
 
-        /* Login Card */
-        .auth-card { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        .zone-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: #333; z-index: 5; }
+        .location-detail {
+            color: #636e72;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* Smooth entry animation */
+        .fade-in-up { animation: fadeInUp 0.5s ease both; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate3d(0, 20px, 0); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .auth-card { max-width: 400px; margin: 60px auto; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav class="navbar navbar-expand navbar-dark shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand" href="#"><i class="fas fa-search-location"></i> Smart Tracker</a>
-            <div class="d-flex" id="nav-controls">
+            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-box-open"></i> My Stuff Tracker</a>
+            <div class="d-flex align-items-center" id="nav-controls">
                 </div>
         </div>
     </nav>
 
     <div id="auth-section" class="container">
-        <div class="auth-card text-center">
-            <h3 class="mb-4">เข้าสู่ระบบ</h3>
+        <div class="auth-card bg-white text-center">
+            <h3 class="mb-4 fw-bold text-primary-custom">ยินดีต้อนรับ</h3>
             <div class="form-floating mb-3">
                 <input type="email" class="form-control" id="email" placeholder="name@example.com">
                 <label>อีเมล</label>
@@ -103,54 +91,69 @@
                 <input type="password" class="form-control" id="password" placeholder="Password">
                 <label>รหัสผ่าน</label>
             </div>
-            <button onclick="login()" class="btn btn-primary w-100 mb-2">เข้าสู่ระบบ</button>
-            <button onclick="register()" class="btn btn-outline-secondary w-100">สมัครสมาชิกใหม่</button>
+            <div class="d-grid gap-2">
+                <button onclick="login()" class="btn btn-primary btn-lg fw-bold">เข้าสู่ระบบ</button>
+                <button onclick="register()" class="btn btn-outline-secondary">สมัครสมาชิก</button>
+            </div>
         </div>
     </div>
 
-    <div id="app-section" class="container py-4 d-none">
+    <div id="app-section" class="container d-none">
         
-        <div class="row mb-4 g-3 align-items-center">
+        <div class="row mb-4 g-3">
             <div class="col-md-4">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-key text-warning"></i></span>
-                    <input type="text" id="active-code" class="form-control" placeholder="ใส่รหัสห้อง (เช่น home1)" onchange="loadItems()">
-                    <button class="btn btn-outline-primary" onclick="loadItems()">โหลดข้อมูล</button>
+                <div class="card shadow-sm border-0 h-100 p-3 bg-white">
+                    <label class="form-label fw-bold"><i class="fas fa-key text-warning"></i> รหัสห้อง/บ้าน</label>
+                    <div class="input-group">
+                        <input type="text" id="active-code" class="form-control" placeholder="เช่น home1 (ใช้ร่วมกัน)">
+                        <button class="btn btn-primary" onclick="loadData()">โหลดข้อมูล</button>
+                    </div>
                 </div>
-                <small class="text-muted ms-2">*ต้องใส่รหัสห้องตรงกันถึงจะเห็นของ</small>
             </div>
-
+            
             <div class="col-md-8">
-                <div class="input-group shadow-sm">
-                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-primary"></i></span>
-                    <input type="text" id="search-box" class="form-control border-start-0" placeholder="พิมพ์ชื่อของ... (เช่น แปรงฟัน, กุญแจ)">
-                </div>
+                 <div class="card shadow-sm border-0 h-100 p-3 bg-white d-flex justify-content-center">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-transparent border-0 ps-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="search-box" class="form-control border-0 shadow-none ps-1 bg-transparent" placeholder="ค้นหา... เช่น กุญแจ, ในลิ้นชัก, ห้องนอน" disabled>
+                    </div>
+                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-8 mb-4">
-                <div class="card shadow border-0">
-                    <div class="card-body p-2">
-                        <div class="map-wrapper" id="map-container">
-                            <div class="map-image"></div>
-                            <div class="zone-badge"><i class="fas fa-home"></i> แผนผังหลัก</div>
-                            </div>
-                    </div>
+        <div class="row g-4">
+            <div class="col-md-4 col-lg-3">
+                <div class="d-grid gap-2 mb-3">
+                     <button class="btn btn-primary shadow-sm py-2 fw-bold" onclick="openAddItemModal()" id="btn-add-item" disabled>
+                        <i class="fas fa-plus-circle"></i> เพิ่มของใหม่
+                    </button>
                 </div>
-                <div class="text-center mt-2 text-muted">
-                    <small><i class="fas fa-mouse-pointer"></i> คลิกบนภาพเพื่อเพิ่มตำแหน่งสิ่งของ</small>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white fw-bold py-3">
+                        <i class="fas fa-map-signs text-primary-custom"></i> โซนในห้องนี้
+                    </div>
+                    <div class="card-body p-2 bg-white">
+                        <ul class="list-group list-group-flush" id="zone-list-display">
+                           <li class="text-muted text-center py-2 small">โหลดรหัสห้องก่อนเพื่อดูโซน</li>
+                        </ul>
+                        <div class="input-group mt-3">
+                            <input type="text" id="new-zone-name" class="form-control form-control-sm" placeholder="ชื่อโซนใหม่.." disabled>
+                            <button class="btn btn-sm btn-outline-primary" onclick="addNewZone()" id="btn-add-zone" disabled><i class="fas fa-plus"></i> เพิ่ม</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <div class="card shadow border-0 h-100">
-                    <div class="card-header bg-white font-weight-bold">
-                        <i class="fas fa-list"></i> รายการของในห้องนี้
-                    </div>
-                    <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
-                        <ul class="list-group list-group-flush" id="item-list">
-                            </ul>
+            <div class="col-md-8 col-lg-9">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fas fa-boxes"></i> รายการของทั้งหมด (<span id="item-count">0</span>)</h5>
+                </div>
+                
+                <div id="item-list-container" class="row g-3">
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="fas fa-box-open fa-3x mb-3 text-secondary opacity-25"></i>
+                        <p>ยังไม่มีข้อมูล กรุณาใส่รหัสห้องแล้วกดโหลด</p>
                     </div>
                 </div>
             </div>
@@ -158,34 +161,34 @@
     </div>
 
     <div class="modal fade" id="addItemModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">เพิ่มของใหม่</h5>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">📦 เพิ่มของใหม่</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" id="new-x"><input type="hidden" id="new-y">
-                    
+                <div class="modal-body pt-4">
                     <div class="mb-3">
-                        <label class="form-label">ชื่อสิ่งของ</label>
-                        <input type="text" id="item-name" class="form-control" placeholder="เช่น กุญแจรถ, รีโมท">
+                        <label class="form-label fw-bold">ชื่อสิ่งของ</label>
+                        <input type="text" id="item-name" class="form-control" placeholder="เช่น พาสปอร์ต, รีโมทแอร์">
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">หมวดหมู่</label>
-                        <select id="item-category" class="form-select">
-                            <option value="ทั่วไป">📦 ทั่วไป</option>
-                            <option value="เอกสาร">📄 เอกสารสำคัญ</option>
-                            <option value="อิเล็กทรอนิกส์">💻 อิเล็กทรอนิกส์</option>
-                            <option value="ของใช้ส่วนตัว">🪥 ของใช้ส่วนตัว</option>
-                            <option value="เครื่องมือ">🔧 เครื่องมือช่าง</option>
-                        </select>
+                         <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger"></i> เลือกโซน</label>
+                        <select id="item-zone-select" class="form-select">
+                            <option value="" selected disabled>-- กรุณาเลือกโซน --</option>
+                            </select>
+                        <div class="form-text small text-end"><a href="#" onclick="document.querySelector('.btn-close').click(); document.getElementById('new-zone-name').focus();">เพิ่มโซนใหม่ที่แถบซ้ายมือ</a></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">รายละเอียดที่ตั้ง (ชัดๆ)</label>
+                        <textarea id="item-location-detail" class="form-control" rows="3" placeholder="เช่น อยู่ในลิ้นชักบนสุดของตู้เสื้อผ้า, บนหลังตู้เย็น"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="button" onclick="saveItem()" class="btn btn-primary">บันทึก</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" onclick="saveItem()" class="btn btn-primary px-4 fw-bold">บันทึกทันที</button>
                 </div>
             </div>
         </div>
@@ -197,7 +200,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDT39HkTA1TLFKvuQNZcrNeIZMLANgy2z0",
@@ -214,203 +217,200 @@
         const db = getFirestore(app);
 
         let currentUser = null;
-        let allItems = []; // เก็บข้อมูลไว้ทำ Search ฝั่ง Client
-        let fuse; // ตัวแปรสำหรับ Fuzzy Search
+        let allItems = [];
+        let currentZones = [];
+        let fuse;
         const addItemModal = new bootstrap.Modal(document.getElementById('addItemModal'));
+        let itemUnsubscribe = null;
+        let zoneUnsubscribe = null;
 
-        // --- Auth Functions ---
+        // --- Auth ---
         window.login = async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try { await signInWithEmailAndPassword(auth, email, password); } 
+            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
             catch (e) { alert(e.message); }
         };
-
         window.register = async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try { 
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert("สมัครเรียบร้อย"); 
-            } catch (e) { alert(e.message); }
+            try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); alert("สมัครสำเร็จ!"); } catch (e) { alert(e.message); }
         };
-
-        window.logout = () => signOut(auth);
+        window.logout = () => {
+            if(itemUnsubscribe) itemUnsubscribe();
+            if(zoneUnsubscribe) zoneUnsubscribe();
+            signOut(auth);
+        }
 
         onAuthStateChanged(auth, (user) => {
+            currentUser = user;
             if (user) {
-                currentUser = user;
                 document.getElementById('auth-section').classList.add('d-none');
                 document.getElementById('app-section').classList.remove('d-none');
-                document.getElementById('nav-controls').innerHTML = `
-                    <span class="navbar-text text-white me-3">${user.email}</span>
-                    <button onclick="logout()" class="btn btn-sm btn-outline-light">Logout</button>
-                `;
+                document.getElementById('nav-controls').innerHTML = `<span class="text-white me-3"><i class="fas fa-user-circle"></i> ${user.email.split('@')[0]}</span><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">Logout</button>`;
             } else {
-                currentUser = null;
                 document.getElementById('auth-section').classList.remove('d-none');
                 document.getElementById('app-section').classList.add('d-none');
+                resetUI();
             }
         });
 
-        // --- Map & Logic ---
-        
-        // 1. Load Items
-        window.loadItems = async () => {
-            const code = document.getElementById('active-code').value;
-            if (!code) return;
+        function resetUI() {
+             document.getElementById('item-list-container').innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-box-open fa-3x mb-3 text-secondary opacity-25"></i><p>กรุณาเข้าสู่ระบบ</p></div>';
+             document.getElementById('zone-list-display').innerHTML = '';
+             toggleControls(false);
+        }
 
-            const q = query(collection(db, "items"), where("secretCode", "==", code));
-            const snapshot = await getDocs(q);
+        function toggleControls(enable) {
+            document.getElementById('search-box').disabled = !enable;
+            document.getElementById('btn-add-item').disabled = !enable;
+            document.getElementById('new-zone-name').disabled = !enable;
+            document.getElementById('btn-add-zone').disabled = !enable;
+        }
+
+
+        // --- Main Logic ---
+        window.loadData = () => {
+            const code = document.getElementById('active-code').value.trim();
+            if (!code) return alert("กรุณาใส่รหัสห้อง");
             
-            allItems = [];
-            snapshot.forEach(doc => allItems.push({ id: doc.id, ...doc.data() }));
+            if(itemUnsubscribe) itemUnsubscribe();
+            if(zoneUnsubscribe) zoneUnsubscribe();
 
-            // ตั้งค่า Fuzzy Search (Fuse.js)
-            // keys: คือหัวข้อที่เราจะค้นหา, threshold: 0.4 คือยอมให้ผิดได้นิดหน่อย (0 คือต้องเป๊ะ, 1 คืออะไรก็ได้)
-            const options = { includeScore: true, keys: ['name', 'category'], threshold: 0.4 };
-            fuse = new Fuse(allItems, options);
+            toggleControls(true);
 
-            renderMap(allItems);
-            renderList(allItems);
+            // 1. Load Zones (Realtime)
+            const zoneQ = query(collection(db, "zones"), where("secretCode", "==", code), orderBy("name"));
+            zoneUnsubscribe = onSnapshot(zoneQ, (snapshot) => {
+                currentZones = [];
+                const zoneListDisplay = document.getElementById('zone-list-display');
+                const zoneSelect = document.getElementById('item-zone-select');
+                
+                zoneListDisplay.innerHTML = '';
+                zoneSelect.innerHTML = '<option value="" selected disabled>-- กรุณาเลือกโซน --</option>';
+
+                if(snapshot.empty) {
+                    zoneListDisplay.innerHTML = '<li class="list-group-item text-muted small text-center">ยังไม่มีโซน เพิ่มเลย!</li>';
+                }
+
+                snapshot.forEach(doc => {
+                    const zone = doc.data();
+                    currentZones.push(zone.name);
+                    // Update sidebar list
+                    zoneListDisplay.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><span class="badge bg-light text-dark border"><i class="fas fa-map-marker-alt text-danger"></i> ${zone.name}</span></li>`;
+                    // Update modal select dropdown
+                    zoneSelect.innerHTML += `<option value="${zone.name}">${zone.name}</option>`;
+                });
+            });
+
+
+            // 2. Load Items (Realtime)
+            const itemQ = query(collection(db, "items"), where("secretCode", "==", code), orderBy("timestamp", "desc"));
+            itemUnsubscribe = onSnapshot(itemQ, (snapshot) => {
+                allItems = [];
+                snapshot.forEach(doc => allItems.push({ id: doc.id, ...doc.data() }));
+                
+                document.getElementById('item-count').innerText = allItems.length;
+
+                // Config Fuzzy Search including new fields
+                fuse = new Fuse(allItems, { includeScore: true, keys: ['name', 'zone', 'locationDetails'], threshold: 0.3 });
+                
+                renderItems(allItems);
+            });
         };
 
-        // 2. Render Functions
-        function renderMap(items) {
-            const container = document.getElementById('map-container');
-            // ลบ Markers เก่า (เก็บพวก map-image และ badge ไว้)
-            const oldMarkers = container.querySelectorAll('.marker');
-            oldMarkers.forEach(el => el.remove());
+        function renderItems(items) {
+            const container = document.getElementById('item-list-container');
+            container.innerHTML = '';
 
-            items.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'marker';
-                el.innerHTML = `<i class="fas fa-map-marker-alt"></i><div class="marker-label">${item.name}</div>`;
-                el.style.left = item.x + '%';
-                el.style.top = item.y + '%';
-                el.dataset.id = item.id;
-                
-                // คลิกเพื่อลบ (ถ้าเป็นคนสร้าง)
-                if(item.userId === currentUser.uid) {
-                    el.onclick = (e) => {
-                        e.stopPropagation();
-                        if(confirm(`ลบ ${item.name}?`)) deleteItem(item.id);
-                    }
-                }
-                container.appendChild(el);
-            });
-        }
-
-        function renderList(items) {
-            const list = document.getElementById('item-list');
-            list.innerHTML = '';
-            if(items.length === 0) {
-                list.innerHTML = '<li class="list-group-item text-center text-muted">ยังไม่มีของในห้องนี้</li>';
-                return;
+            if (items.length === 0) {
+                 container.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-ghost fa-3x mb-3 text-secondary opacity-25"></i><p>ยังไม่มีของในห้องนี้</p></div>';
+                 return;
             }
 
-            items.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.innerHTML = `
-                    <div>
-                        <strong>${item.name}</strong><br>
-                        <small class="text-muted badge bg-light text-dark border">${item.category}</small>
+            items.forEach((item, index) => {
+                // Assign a color border based on zone (simple hashing)
+                const colors = ['primary', 'success', 'danger', 'warning', 'info'];
+                const zoneColor = colors[item.zone.length % colors.length];
+
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 fade-in-up';
+                col.style.animationDelay = `${index * 0.05}s`;
+
+                col.innerHTML = `
+                    <div class="card item-card h-100 border-${zoneColor}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title fw-bold mb-0 text-dark">${item.name}</h5>
+                                ${currentUser.uid === item.userId ? `<button class="btn btn-sm btn-link text-danger p-0" onclick="deleteItem('${item.id}')"><i class="fas fa-trash-alt"></i></button>` : ''}
+                            </div>
+                            <div class="mb-3">
+                                <span class="zone-badge"><i class="fas fa-map-marker-alt"></i> โซน: ${item.zone}</span>
+                            </div>
+                             <div class="location-detail bg-light p-2 rounded">
+                                <i class="fas fa-info-circle text-${zoneColor}"></i> <b>ที่ตั้ง:</b> ${item.locationDetails || '-'}
+                            </div>
+                             <div class="text-end mt-2">
+                                <small class="text-muted" style="font-size: 0.75rem;"><i class="far fa-clock"></i> ${item.timestamp?.toDate().toLocaleDateString('th-TH')}</small>
+                            </div>
+                        </div>
                     </div>
-                    <button class="btn btn-sm btn-outline-info" onclick="focusItem('${item.id}')"><i class="fas fa-eye"></i></button>
                 `;
-                list.appendChild(li);
+                container.appendChild(col);
             });
         }
 
-        // 3. Add Item Flow
-        document.getElementById('map-container').addEventListener('click', (e) => {
-            // ป้องกันการคลิกถ้ากดที่ marker
-            if(e.target.closest('.marker')) return;
-            
+        // --- Actions ---
+        window.addNewZone = async () => {
+            const nameInput = document.getElementById('new-zone-name');
+            const name = nameInput.value.trim();
             const code = document.getElementById('active-code').value;
-            if(!code) return alert("ใส่รหัสห้องก่อนครับ");
+            if(!name || !code) return;
 
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            if(currentZones.includes(name)) return alert("ชื่อโซนนี้มีอยู่แล้ว");
 
-            document.getElementById('new-x').value = x;
-            document.getElementById('new-y').value = y;
-            document.getElementById('item-name').value = '';
-            
-            addItemModal.show();
-        });
+            try {
+                await addDoc(collection(db, "zones"), { name, secretCode: code, userId: currentUser.uid });
+                nameInput.value = '';
+            } catch(e) { console.error(e); }
+        };
+
+        window.openAddItemModal = () => {
+             if(currentZones.length === 0) return alert("กรุณาเพิ่ม 'โซน' ก่อนครับ (ที่แถบซ้ายมือ)");
+             document.getElementById('item-name').value = '';
+             document.getElementById('item-location-detail').value = '';
+             document.getElementById('item-zone-select').selectedIndex = 0;
+             addItemModal.show();
+        }
 
         window.saveItem = async () => {
-            const name = document.getElementById('item-name').value;
-            const category = document.getElementById('item-category').value;
-            const x = parseFloat(document.getElementById('new-x').value);
-            const y = parseFloat(document.getElementById('new-y').value);
+            const name = document.getElementById('item-name').value.trim();
+            const zone = document.getElementById('item-zone-select').value;
+            const locationDetails = document.getElementById('item-location-detail').value.trim();
             const code = document.getElementById('active-code').value;
 
-            if(!name) return;
+            if(!name || !zone) return alert("กรุณาใส่ชื่อของและเลือกโซน");
 
             try {
                 await addDoc(collection(db, "items"), {
-                    userId: currentUser.uid,
-                    name, category, x, y, secretCode: code,
+                    userId: currentUser.uid, secretCode: code,
+                    name, zone, locationDetails,
                     timestamp: new Date()
                 });
                 addItemModal.hide();
-                loadItems();
             } catch (e) { console.error(e); }
         };
 
         window.deleteItem = async (id) => {
-            await deleteDoc(doc(db, "items", id));
-            loadItems();
+            if(confirm("ลบรายการนี้?")) await deleteDoc(doc(db, "items", id));
         };
 
-        // 4. Smart Search Logic (ค้นหาแบบ Fuzzy)
+        // --- Search ---
         document.getElementById('search-box').addEventListener('keyup', (e) => {
             const term = e.target.value;
-            
             if (!term) {
-                // ถ้าช่องว่าง ให้แสดงทั้งหมด
-                renderMap(allItems);
-                renderList(allItems);
+                renderItems(allItems);
                 return;
             }
-
-            // ใช้ Fuse.js ค้นหา (จะได้ผลลัพธ์ที่ใกล้เคียงที่สุด)
             const results = fuse.search(term).map(r => r.item);
-            
-            // อัปเดต List ด้านขวา
-            renderList(results);
-
-            // อัปเดต Map: ทำให้ตัวที่ไม่เกี่ยวจางลง (Dim)
-            const markers = document.querySelectorAll('.marker');
-            markers.forEach(m => {
-                const isMatch = results.find(r => r.id === m.dataset.id);
-                if (isMatch) {
-                    m.classList.remove('dimmed');
-                    m.classList.add('highlighted');
-                } else {
-                    m.classList.add('dimmed');
-                    m.classList.remove('highlighted');
-                }
-            });
+            renderItems(results);
         });
-        
-        // ฟังก์ชันกดปุ่ม "ดู" ใน List แล้วแมพจะไฮไลท์
-        window.focusItem = (id) => {
-            const markers = document.querySelectorAll('.marker');
-            markers.forEach(m => {
-                if (m.dataset.id === id) {
-                    m.classList.remove('dimmed');
-                    m.classList.add('highlighted');
-                } else {
-                    m.classList.add('dimmed');
-                    m.classList.remove('highlighted');
-                }
-            });
-        };
     </script>
 </body>
 </html>
